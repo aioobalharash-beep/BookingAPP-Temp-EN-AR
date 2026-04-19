@@ -614,16 +614,16 @@ export const Booking: React.FC = () => {
       {/* Stay Type Selector */}
       <section className="space-y-3">
         <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-          Stay Type *
+          {t('booking.stayType')} *
         </label>
         <div className="grid grid-cols-3 gap-3">
           {([
-            { value: 'day_use', label: 'Day Use', sub: undefined },
-            { value: 'night_stay', label: 'Night Stay', sub: undefined },
+            { value: 'day_use', label: t('booking.stayTypeDayUse'), sub: undefined },
+            { value: 'night_stay', label: t('booking.stayTypeNightStay'), sub: undefined },
             {
               value: 'event',
-              label: pricingSettings?.event_category_name?.trim() || 'Event',
-              sub: `${eventRate} ${t('common.omr')} / ${t('common.night')}`,
+              label: pricingSettings?.event_category_name?.trim() || t('booking.stayTypeEvent'),
+              sub: t('booking.pricePerNight', { amount: eventRate }),
             },
           ] as const).map(opt => (
             <button
@@ -746,7 +746,7 @@ export const Booking: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-3"
         >
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.selectTimeSlot')} *</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.selectDayUseType')} *</label>
           <div className="space-y-2">
             {availableSlots.map(slot => {
               const dow = new Date(currentYear, currentMonth, selectedDates.start!).getDay();
