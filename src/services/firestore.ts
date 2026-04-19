@@ -231,6 +231,7 @@ export interface FirestoreBooking {
   receipt_image?: string;
   receiptURL?: string;
   idImageUrl?: string;
+  stay_type?: 'day_use' | 'night_stay' | 'event';
   slot_id?: string;
   slot_name?: string;
   slot_start_time?: string;
@@ -260,6 +261,7 @@ export const firestoreBookings = {
     receipt_image?: string;
     receiptURL?: string;
     idImageUrl?: string;
+    stay_type?: 'day_use' | 'night_stay' | 'event';
     slot_id?: string;
     slot_name?: string;
     slot_start_time?: string;
@@ -312,6 +314,7 @@ export const firestoreBookings = {
       receipt_image: data.receipt_image || '',
       receiptURL: data.receiptURL || '',
       idImageUrl: data.idImageUrl || '',
+      ...(data.stay_type ? { stay_type: data.stay_type } : {}),
       ...(data.slot_id ? {
         slot_id: data.slot_id,
         slot_name: data.slot_name || '',

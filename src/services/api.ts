@@ -43,6 +43,7 @@ export const bookingsApi = {
     receipt_image?: string;
     receiptURL?: string;
     idImageUrl?: string;
+    stay_type?: 'day_use' | 'night_stay' | 'event';
     slot_id?: string;
     slot_name?: string;
     slot_start_time?: string;

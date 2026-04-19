@@ -30,6 +30,7 @@ interface BookingGuest {
   payment_status: string;
   payment_method: string;
   receiptURL: string;
+  idImageUrl?: string;
   created_at: string;
   isPinned: boolean;
   displayStatus: DisplayStatus;
@@ -118,6 +119,7 @@ export const Guests: React.FC = () => {
             payment_status: data.payment_status || 'pending',
             payment_method: data.payment_method || '',
             receiptURL: data.receiptURL || '',
+            idImageUrl: data.idImageUrl || '',
             created_at: data.created_at || '',
             isPinned: data.isPinned === true,
             displayStatus: computeDisplayStatus({
@@ -492,6 +494,15 @@ export const Guests: React.FC = () => {
                         >
                           <Paperclip size={13} />
                           {t('guests.viewReceipt')}
+                        </button>
+                      )}
+                      {guest.idImageUrl && (
+                        <button
+                          onClick={() => window.open(guest.idImageUrl, '_blank', 'noopener,noreferrer')}
+                          className="px-4 py-2.5 rounded-lg border border-secondary-gold/40 bg-secondary-gold/5 text-secondary-gold hover:bg-secondary-gold/10 text-[10px] uppercase font-bold tracking-widest active:scale-[0.98] transition-all flex items-center gap-1.5"
+                        >
+                          <Paperclip size={13} />
+                          View ID
                         </button>
                       )}
                     </>
