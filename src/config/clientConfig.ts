@@ -1,4 +1,3 @@
-// --- THE BLUEPRINT ---
 export interface ClientTheme {
   primary: string;
   secondary: string;
@@ -23,14 +22,13 @@ export interface ClientConfig {
   social: ClientSocial;
 }
 
-// --- AL MALAK CHALET DATA ---
 export const CLIENT_CONFIG: ClientConfig = {
   chaletName: 'Al Malak Chalet',
   logoPath: '/assets/brand/logo.png',
   theme: {
-    primary: '#2B3D8B',   // Deep Navy from Logo
-    secondary: '#7089C4', // Soft Blue
-    background: '#F5F3ED' // Cream Background
+    primary: '#2B3D8B',
+    secondary: '#7089C4',
+    background: '#F5F3ED',
   },
   admin: {
     email: 'nooralmalak901@gmail.com',
@@ -42,23 +40,21 @@ export const CLIENT_CONFIG: ClientConfig = {
   },
 };
 
-// --- THE ENGINES (FIXES ALL BUILD ERRORS) ---
+export const getClientConfig = (): ClientConfig => CLIENT_CONFIG;
 
-// 1. Returns the data to the components
-export const getClientConfig = (): ClientConfig => {
-  return CLIENT_CONFIG;
+export const whatsappHref = (number: string): string => {
+  const digits = (number || '').replace(/\D/g, '');
+  return `https://wa.me/${digits}`;
 };
 
-// 2. Injects the colors into the website's CSS
-export const applyTheme = (theme: ClientTheme) => {
-  if (typeof document !== 'undefined') {
-    const root = document.documentElement;
-    root.style.setProperty('--primary', theme.primary);
-    root.style.setProperty('--secondary', theme.secondary);
-    if (theme.background) {
-      root.style.setProperty('--background', theme.background);
-    }
+export const applyTheme = (theme: ClientTheme): void => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.style.setProperty('--primary', theme.primary);
+  root.style.setProperty('--secondary', theme.secondary);
+  if (theme.background) {
+    root.style.setProperty('--background', theme.background);
   }
 };
 
-export const FALLBACK_CLIENT_CONFIG = CLIENT_CONFIG;
+export const FALLBACK_CLIENT_CONFIG: ClientConfig = CLIENT_CONFIG;
