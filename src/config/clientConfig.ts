@@ -1,4 +1,4 @@
-// --- THE BLUEPRINT (Don't change these) ---
+// --- THE BLUEPRINT ---
 export interface ClientTheme {
   primary: string;
   secondary: string;
@@ -28,19 +28,23 @@ export const CLIENT_CONFIG: ClientConfig = {
   chaletName: 'Al Malak Chalet',
   logoPath: '/assets/brand/logo.png',
   theme: {
-    primary: '#2B3D8B',   // Deep Navy from Logo
-    secondary: '#7089C4', // Soft Blue for UI depth
-    background: '#F5F3ED' // Cream Background for a premium feel
+    primary: '#2B3D8B',   
+    secondary: '#7089C4', 
+    background: '#F5F3ED' 
   },
   admin: {
     email: 'nooralmalak901@gmail.com',
-    name: 'Al Malak Admin', // You can update this to the owner's actual name later
+    name: 'Al Malak Admin',
   },
   social: {
-    whatsapp: '96871919666', // Properly formatted for wa.me links
+    whatsapp: '96871919666',
     instagram: 'https://www.instagram.com/almalak_chalet/',
   },
 };
 
-// Safety net for the app
+// --- THE MISSING LINK (FIXES THE BUILD ERROR) ---
+export const getClientConfig = (): ClientConfig => {
+  return CLIENT_CONFIG;
+};
+
 export const FALLBACK_CLIENT_CONFIG = CLIENT_CONFIG;
