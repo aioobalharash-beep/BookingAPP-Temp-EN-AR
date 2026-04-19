@@ -205,8 +205,8 @@ export const Booking: React.FC = () => {
     if (isDayBooked(day)) return;
     setSelectedSlot(null);
 
-    // Event / Day Use: always single-day selection
-    if (stayType === 'event' || stayType === 'day_use') {
+    // Day Use is always single-day. Event + Night Stay both support multi-day ranges.
+    if (stayType === 'day_use') {
       setSelectedDates({ start: day, end: day });
       setErrors(prev => ({ ...prev, dates: '' }));
       return;
@@ -242,9 +242,11 @@ export const Booking: React.FC = () => {
 
   const isEvent = stayType === 'event';
   const isDayUse = !isEvent && selectedDates.start !== null && selectedDates.end !== null && selectedDates.start === selectedDates.end;
-  const nights = !isEvent && selectedDates.start && selectedDates.end ? selectedDates.end - selectedDates.start : 0;
+  const nights = selectedDates.start && selectedDates.end && selectedDates.start !== selectedDates.end
+    ? selectedDates.end - selectedDates.start
+    : 0;
   const securityDeposit = pricingSettings?.security_deposit ?? property?.security_deposit ?? 50;
-  // Event flat-rate pricing — fall back to ~2× nightly rate when no event_rate is configured.
+  // Admin-managed per-night Event price. Falls back to ~2× nightly rate if the owner hasn't set one yet.
   const eventRate = pricingSettings?.event_rate
     ?? (property?.nightly_rate ? Math.round(property.nightly_rate * 2) : 300);
 
@@ -257,18 +259,25 @@ export const Booking: React.FC = () => {
   const priceBreakdown: PriceBreakdown | null = (() => {
     if (selectedDates.start === null || selectedDates.end === null) return null;
 
-    // Event — flat rate, single chosen day
+    // Event — per-night flat rate; date range identical to Night Stay.
     if (isEvent) {
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDates.start).padStart(2, '0')}`;
-      const dow = new Date(currentYear, currentMonth, selectedDates.start).getDay();
-      const dayLabel = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow];
+      if (!nights) return null;
+      const perNight: PriceBreakdown['per_night'] = [];
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const cursor = new Date(currentYear, currentMonth, selectedDates.start);
+      for (let i = 0; i < nights; i++) {
+        const dateStr = cursor.toISOString().split('T')[0];
+        perNight.push({ date: dateStr, dayLabel: dayLabels[cursor.getDay()], rate: eventRate, isSpecial: false });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      const subtotal = eventRate * nights;
       return {
-        nights: 1,
+        nights,
         isDayUse: false,
-        subtotal: eventRate,
+        subtotal,
         discount_amount: 0,
-        total: eventRate,
-        per_night: [{ date: dateStr, dayLabel, rate: eventRate, isSpecial: false }],
+        total: subtotal,
+        per_night: perNight,
       };
     }
 
@@ -609,9 +618,13 @@ export const Booking: React.FC = () => {
         </label>
         <div className="grid grid-cols-3 gap-3">
           {([
-            { value: 'day_use', label: 'Day Use' },
-            { value: 'night_stay', label: 'Night Stay' },
-            { value: 'event', label: 'Event', sub: 'Full Day & Night' },
+            { value: 'day_use', label: 'Day Use', sub: undefined },
+            { value: 'night_stay', label: 'Night Stay', sub: undefined },
+            {
+              value: 'event',
+              label: pricingSettings?.event_category_name?.trim() || 'Event',
+              sub: `${eventRate} ${t('common.omr')} / ${t('common.night')}`,
+            },
           ] as const).map(opt => (
             <button
               key={opt.value}
@@ -619,9 +632,10 @@ export const Booking: React.FC = () => {
               onClick={() => {
                 setStayType(opt.value);
                 setSelectedSlot(null);
-                if (opt.value === 'day_use' || opt.value === 'event') {
+                if (opt.value === 'day_use') {
                   setSelectedDates(prev => prev.start !== null ? { start: prev.start, end: prev.start } : prev);
-                } else if (opt.value === 'night_stay') {
+                } else {
+                  // Night Stay / Event: if a single-day selection existed, clear the end so the user can pick a range.
                   setSelectedDates(prev => prev.start !== null && prev.end === prev.start ? { start: prev.start, end: null } : prev);
                 }
               }}
@@ -638,7 +652,7 @@ export const Booking: React.FC = () => {
                 </div>
               )}
               <p className="text-sm font-bold text-primary-navy">{opt.label}</p>
-              {'sub' in opt && opt.sub && (
+              {opt.sub && (
                 <p className="text-[10px] text-primary-navy/50 font-medium mt-0.5">{opt.sub}</p>
               )}
             </button>
@@ -773,7 +787,7 @@ export const Booking: React.FC = () => {
       )}
 
       {/* Pricing Summary */}
-      {priceBreakdown && (isDayUse || nights > 0 || isEvent) && (
+      {priceBreakdown && (isDayUse || nights > 0) && (
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -953,7 +967,7 @@ export const Booking: React.FC = () => {
       </section>
 
       {/* Payment Method Selection */}
-      {(isDayUse || nights > 0 || isEvent) && (
+      {(isDayUse || nights > 0) && (
         <section className="space-y-4">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.paymentMethod')} *</label>
           <div className={cn("grid gap-3", SHOW_THAWANI ? "grid-cols-2" : "grid-cols-1")}>
@@ -1054,7 +1068,7 @@ export const Booking: React.FC = () => {
 
       <div className="space-y-4 pt-4">
         {/* Terms of Stay Checkbox */}
-        {termsOfStay && (isDayUse || nights > 0 || isEvent) && (
+        {termsOfStay && (isDayUse || nights > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={termsNudge ? { opacity: 1, y: 0, x: [0, -6, 6, -4, 4, 0] } : { opacity: 1, y: 0 }}
@@ -1122,7 +1136,7 @@ export const Booking: React.FC = () => {
 
         <button
           onClick={handleSubmit}
-          disabled={submitting || idUploading || !idImageUrl || (!isDayUse && !isEvent && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
+          disabled={submitting || idUploading || !idImageUrl || (!isDayUse && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
           className="w-full bg-primary-navy text-white py-5 rounded-[20px] font-bold text-sm uppercase tracking-widest shadow-xl shadow-primary-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {submitting ? (

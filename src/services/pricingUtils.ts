@@ -22,7 +22,8 @@ export interface PricingSettings {
   friday_rate: number;
   saturday_rate: number;
   day_use_rate: number;         // Same-day "Day Use" price (e.g. 12 PM – 10 PM)
-  event_rate?: number;          // Flat price for "Event (Full Day & Night)" bookings
+  event_category_name?: string; // Admin-editable label for the Event option (e.g. "Private Function")
+  event_rate?: number;          // Per-night price used when stay_type = 'event'
   security_deposit: number;     // Refundable — excluded from revenue/tax
   special_dates: { date: string; price: number }[];  // YYYY-MM-DD
   discount?: {
@@ -277,6 +278,7 @@ export function migratePricing(raw: any): PricingSettings {
     friday_rate: raw.friday_rate || weekday,
     saturday_rate: raw.saturday_rate || weekday,
     day_use_rate: raw.day_use_rate || Math.round(weekday * 0.6),
+    event_category_name: raw.event_category_name || '',
     event_rate: raw.event_rate ?? Math.round(weekday * 2),
     security_deposit: raw.security_deposit || 50,
     special_dates: raw.special_dates || [],

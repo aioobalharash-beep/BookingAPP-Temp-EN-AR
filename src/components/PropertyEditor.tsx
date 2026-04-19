@@ -43,6 +43,8 @@ const DEFAULT_PRICING: PricingSettings = {
   friday_rate: 180,
   saturday_rate: 150,
   day_use_rate: 70,
+  event_category_name: '',
+  event_rate: 240,
   security_deposit: 50,
   special_dates: [],
   day_use_slots: [],
@@ -334,6 +336,38 @@ const PropertyEditorComponent: React.FC = () => {
               <input type="number" value={form.pricing[key] as number} onChange={(e) => setPricing({ [key]: parseInt(e.target.value) || 0 })} className={inputClass} />
             </div>
           ))}
+        </div>
+
+        {/* Event Booking */}
+        <div className="pt-4 border-t border-primary-navy/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Tag size={14} className="text-secondary-gold" />
+            <h4 className="text-xs font-bold text-primary-navy uppercase tracking-wide">Event Booking</h4>
+          </div>
+          <p className="text-[10px] text-primary-navy/40 font-medium mb-3">
+            Guests can select "Event" on the booking form. The total is calculated as nights × the price below.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Event Category Name</label>
+              <input
+                type="text"
+                value={form.pricing.event_category_name || ''}
+                onChange={(e) => setPricing({ event_category_name: e.target.value })}
+                placeholder="e.g. Private Function"
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Event Price per Night (OMR)</label>
+              <input
+                type="number"
+                value={form.pricing.event_rate ?? 0}
+                onChange={(e) => setPricing({ event_rate: parseInt(e.target.value) || 0 })}
+                className={inputClass}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Security Deposit */}
