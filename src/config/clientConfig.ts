@@ -28,9 +28,9 @@ export const CLIENT_CONFIG: ClientConfig = {
   chaletName: 'Al Malak Chalet',
   logoPath: '/assets/brand/logo.png',
   theme: {
-    primary: '#2B3D8B',   
-    secondary: '#7089C4', 
-    background: '#F5F3ED' 
+    primary: '#2B3D8B',   // Deep Navy from Logo
+    secondary: '#7089C4', // Soft Blue
+    background: '#F5F3ED' // Cream Background
   },
   admin: {
     email: 'nooralmalak901@gmail.com',
@@ -42,9 +42,23 @@ export const CLIENT_CONFIG: ClientConfig = {
   },
 };
 
-// --- THE MISSING LINK (FIXES THE BUILD ERROR) ---
+// --- THE ENGINES (FIXES ALL BUILD ERRORS) ---
+
+// 1. Returns the data to the components
 export const getClientConfig = (): ClientConfig => {
   return CLIENT_CONFIG;
+};
+
+// 2. Injects the colors into the website's CSS
+export const applyTheme = (theme: ClientTheme) => {
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    root.style.setProperty('--primary', theme.primary);
+    root.style.setProperty('--secondary', theme.secondary);
+    if (theme.background) {
+      root.style.setProperty('--background', theme.background);
+    }
+  }
 };
 
 export const FALLBACK_CLIENT_CONFIG = CLIENT_CONFIG;
