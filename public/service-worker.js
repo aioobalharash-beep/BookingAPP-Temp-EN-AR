@@ -1,4 +1,4 @@
-const CACHE_NAME = 'al-malak-shell-v1';
+const CACHE_NAME = 'al-malak-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

@@ -112,7 +112,13 @@ const Footer = React.memo<FooterProps>(({ chaletName, footerText, whatsappNumber
         <button onClick={onAbout} className="text-xs text-primary-navy/60 underline font-bold">{aboutLabel}</button>
       </div>
       <div className="flex gap-8 mt-2">
-        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-primary-navy/40 hover:text-secondary-gold transition-colors">
+        <a
+          href="https://www.instagram.com/almalak_chalet/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram"
+          className="text-primary-navy/40 hover:text-secondary-gold transition-colors"
+        >
           <Instagram size={20} />
         </a>
         {waHref && (
