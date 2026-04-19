@@ -10,12 +10,16 @@ import {
   orderBy,
   where,
 } from 'firebase/firestore';
-import { db } from './firebase';
-import bcryptjs from 'bcryptjs';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
+import { db, auth } from './firebase';
+import { CLIENT_CONFIG } from '../config/clientConfig';
 
 // ── Collection refs ──
 
-const usersCol = () => collection(db, 'users');
 const propertiesCol = () => collection(db, 'properties');
 const bookingsCol = () => collection(db, 'bookings');
 const guestsCol = () => collection(db, 'guests');
@@ -33,31 +37,10 @@ export async function ensureSeedData() {
   if (seedInitialized) return;
   seedInitialized = true;
 
-  // Check if users already exist
-  const usersSnap = await getDocs(usersCol());
-  if (usersSnap.size > 0) return;
-
-  // Seed users
-  const adminHash = bcryptjs.hashSync('admin123', 10);
-  const clientHash = bcryptjs.hashSync('guest123', 10);
-
-  await setDoc(doc(db, 'users', 'u1'), {
-    name: 'Ahmed Al-Said',
-    email: 'nooralmalak901@gmail.com',
-    password: adminHash,
-    role: 'admin',
-    phone: '+968 9100 0001',
-    created_at: new Date().toISOString(),
-  });
-
-  await setDoc(doc(db, 'users', 'u2'), {
-    name: 'Salim Al-Harthy',
-    email: 'salim@guest.com',
-    password: clientHash,
-    role: 'client',
-    phone: '+968 9200 0002',
-    created_at: new Date().toISOString(),
-  });
+  // Users are managed by Firebase Auth; profile docs are created on first login
+  // via firestoreUsers.login/register. We only seed non-user domain data here.
+  const propertiesSnap = await getDocs(propertiesCol());
+  if (propertiesSnap.size > 0) return;
 
   // Seed properties
   const properties = [
@@ -91,63 +74,118 @@ export async function ensureSeedData() {
 
 // ── Users / Auth ──
 
+type UserRole = 'admin' | 'client';
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string;
+}
+
+const isAdminEmail = (email: string | null | undefined): boolean => {
+  const adminEmail = (CLIENT_CONFIG.admin.email || '').trim().toLowerCase();
+  return !!email && !!adminEmail && email.trim().toLowerCase() === adminEmail;
+};
+
+const mapAuthError = (err: any): Error => {
+  const code: string = err?.code || '';
+  if (
+    code === 'auth/invalid-credential' ||
+    code === 'auth/wrong-password' ||
+    code === 'auth/user-not-found'
+  ) {
+    return new Error('Invalid email or password');
+  }
+  if (code === 'auth/invalid-email') return new Error('Please enter a valid email address');
+  if (code === 'auth/email-already-in-use') return new Error('An account with this email already exists');
+  if (code === 'auth/weak-password') return new Error('Password must be at least 6 characters');
+  if (code === 'auth/too-many-requests') return new Error('Too many attempts. Please try again later.');
+  if (code === 'auth/network-request-failed') return new Error('Network error. Please check your connection.');
+  if (code === 'auth/user-disabled') return new Error('This account has been disabled.');
+  return new Error(err?.message || 'Sign in failed');
+};
+
 export const firestoreUsers = {
-  async login(email: string, password: string) {
-    await ensureSeedData();
-    const q = query(usersCol(), where('email', '==', email));
-    const snap = await getDocs(q);
-    if (snap.empty) throw new Error('Invalid email or password');
+  async login(email: string, password: string): Promise<{ user: AppUser }> {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const fbUser = credential.user;
 
-    const userDoc = snap.docs[0];
-    const userData = userDoc.data();
+      const profileRef = doc(db, 'users', fbUser.uid);
+      const profileSnap = await getDoc(profileRef);
 
-    const valid = bcryptjs.compareSync(password, userData.password);
-    if (!valid) throw new Error('Invalid email or password');
+      let profile: Omit<AppUser, 'id'>;
+      if (profileSnap.exists()) {
+        const data = profileSnap.data();
+        profile = {
+          name: data.name || fbUser.displayName || email.split('@')[0],
+          email: data.email || fbUser.email || email,
+          role: (data.role as UserRole) || (isAdminEmail(fbUser.email) ? 'admin' : 'client'),
+          phone: data.phone || fbUser.phoneNumber || '',
+        };
+      } else {
+        profile = {
+          name: fbUser.displayName || email.split('@')[0],
+          email: fbUser.email || email,
+          role: isAdminEmail(fbUser.email) ? 'admin' : 'client',
+          phone: fbUser.phoneNumber || '',
+        };
+        await setDoc(profileRef, {
+          ...profile,
+          created_at: new Date().toISOString(),
+        });
+      }
 
-    const user = {
-      id: userDoc.id,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-      phone: userData.phone,
-    };
-
-    return { user };
+      return { user: { id: fbUser.uid, ...profile } };
+    } catch (err) {
+      throw mapAuthError(err);
+    }
   },
 
-  async register(data: { name: string; email: string; password: string; phone?: string }) {
-    await ensureSeedData();
-    const q = query(usersCol(), where('email', '==', data.email));
-    const snap = await getDocs(q);
-    if (!snap.empty) throw new Error('An account with this email already exists');
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }): Promise<{ user: AppUser }> {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, data.email.trim(), data.password);
+      const fbUser = credential.user;
 
-    const hash = bcryptjs.hashSync(data.password, 10);
-    const docRef = await addDoc(usersCol(), {
-      name: data.name,
-      email: data.email,
-      password: hash,
-      role: 'client',
-      phone: data.phone || '',
-      created_at: new Date().toISOString(),
-    });
+      const profile: Omit<AppUser, 'id'> = {
+        name: data.name,
+        email: fbUser.email || data.email,
+        role: isAdminEmail(fbUser.email) ? 'admin' : 'client',
+        phone: data.phone || '',
+      };
+      await setDoc(doc(db, 'users', fbUser.uid), {
+        ...profile,
+        created_at: new Date().toISOString(),
+      });
 
-    const user = {
-      id: docRef.id,
-      name: data.name,
-      email: data.email,
-      role: 'client' as const,
-      phone: data.phone,
-    };
-
-    return { user };
+      return { user: { id: fbUser.uid, ...profile } };
+    } catch (err) {
+      throw mapAuthError(err);
+    }
   },
 
-  async getById(id: string) {
-    const ref = doc(db, 'users', id);
-    const snap = await getDoc(ref);
+  async logout(): Promise<void> {
+    await signOut(auth);
+  },
+
+  async getById(id: string): Promise<AppUser | null> {
+    const snap = await getDoc(doc(db, 'users', id));
     if (!snap.exists()) return null;
     const data = snap.data();
-    return { id: snap.id, name: data.name, email: data.email, role: data.role, phone: data.phone };
+    return {
+      id: snap.id,
+      name: data.name,
+      email: data.email,
+      role: (data.role as UserRole) || 'client',
+      phone: data.phone,
+    };
   },
 };
 

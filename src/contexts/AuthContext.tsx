@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { authApi } from '../services/api';
 
 interface User {
@@ -12,9 +14,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<User>;
+  logout: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -24,48 +26,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('almalak_user');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        // Verify user still exists in Firestore
-        authApi.me(parsed.id)
-          .then((userData) => {
-            if (userData) {
-              setUser(userData as User);
-            } else {
-              localStorage.removeItem('almalak_user');
-            }
-          })
-          .catch(() => {
-            localStorage.removeItem('almalak_user');
-          })
-          .finally(() => setIsLoading(false));
-      } catch {
-        localStorage.removeItem('almalak_user');
-        setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        try {
+          const profile = await authApi.me(fbUser.uid);
+          setUser((profile as User) ?? null);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-    } else {
       setIsLoading(false);
-    }
+    });
+    return () => unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const result = await authApi.login(email, password);
-    localStorage.setItem('almalak_user', JSON.stringify(result.user));
     setUser(result.user);
+    return result.user;
   }, []);
 
   const register = useCallback(async (data: { name: string; email: string; password: string; phone?: string }) => {
     const result = await authApi.register(data);
-    localStorage.setItem('almalak_user', JSON.stringify(result.user));
     setUser(result.user);
+    return result.user;
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('almalak_user');
+  const logout = useCallback(async () => {
+    await authApi.logout();
     setUser(null);
   }, []);
 

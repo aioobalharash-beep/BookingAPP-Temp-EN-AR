@@ -52,13 +52,11 @@ export const Login: React.FC = () => {
         if (!name.trim()) { setError('Name is required'); setLoading(false); return; }
         await register({ name: name.trim(), email, password, phone: phone || undefined });
       } else {
-        await login(email, password);
-        const adminEmail = config.admin.email;
+        const signedIn = await login(email, password);
+        const adminEmail = (config.admin.email || '').trim().toLowerCase();
         const entered = email.trim().toLowerCase();
-        const storedRaw = localStorage.getItem('almalak_user');
-        const stored = storedRaw ? JSON.parse(storedRaw) : null;
-        if (stored?.role === 'admin' && adminEmail && entered !== adminEmail) {
-          logout();
+        if (signedIn.role === 'admin' && adminEmail && entered !== adminEmail) {
+          await logout();
           setError('This account is not authorized as an administrator.');
           setLoading(false);
           return;
