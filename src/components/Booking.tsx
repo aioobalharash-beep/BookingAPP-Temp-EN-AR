@@ -33,6 +33,12 @@ export const Booking: React.FC = () => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptFileName, setReceiptFileName] = useState('');
 
+  // Civil ID / Passport — uploaded eagerly to Cloudinary; submission blocked until URL is set.
+  const [idFileName, setIdFileName] = useState('');
+  const [idImageUrl, setIdImageUrl] = useState<string | null>(null);
+  const [idUploading, setIdUploading] = useState(false);
+  const [idUploadProgress, setIdUploadProgress] = useState<number | null>(null);
+
   // Upload progress
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
@@ -276,6 +282,12 @@ export const Booking: React.FC = () => {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    if (!idImageUrl) {
+      newErrors.idImage = idUploading
+        ? 'Please wait for the ID upload to finish'
+        : 'Please upload a clear photo of your Civil ID or Passport';
+    }
+
     if (!selectedDates.start || !selectedDates.end) {
       newErrors.dates = 'Please select check-in and check-out dates';
     }
@@ -312,6 +324,30 @@ export const Booking: React.FC = () => {
       folder: 'al-malak-receipts',
       onProgress: (pct) => setUploadProgress(pct),
     }).finally(() => setUploadProgress(null));
+
+  const handleIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIdFileName(file.name);
+    setIdImageUrl(null);
+    setErrors(prev => ({ ...prev, idImage: '' }));
+    setIdUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, {
+        folder: 'al-malak-ids',
+        onProgress: (pct) => setIdUploadProgress(pct),
+      });
+      setIdImageUrl(url);
+    } catch (err: any) {
+      console.error('ID upload failed:', err.message);
+      setErrors(prev => ({ ...prev, idImage: err.message || 'ID upload failed. Please try again.' }));
+      setIdFileName('');
+    } finally {
+      setIdUploading(false);
+      setIdUploadProgress(null);
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = async () => {
     if (!validate() || !property || selectedDates.start === null || selectedDates.end === null) return;
@@ -363,6 +399,7 @@ export const Booking: React.FC = () => {
             depositAmount,
             grandTotal,
             payment_method: 'thawani',
+            idImageUrl: idImageUrl || undefined,
             ...(selectedSlot ? {
               slot_id: selectedSlot.id,
               slot_name: selectedSlot.name,
@@ -433,6 +470,7 @@ export const Booking: React.FC = () => {
         grandTotal,
         payment_method: paymentMethod,
         receiptURL,
+        idImageUrl: idImageUrl || undefined,
         ...(selectedSlot ? {
           slot_id: selectedSlot.id,
           slot_name: selectedSlot.name,
@@ -780,6 +818,51 @@ export const Booking: React.FC = () => {
         </div>
 
         <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+            Civil ID / Passport *
+          </label>
+          <label
+            className={cn(
+              "flex items-center justify-between gap-3 bg-surface-container-low border rounded-xl py-4 px-5 cursor-pointer transition-all hover:bg-surface-container-low/70",
+              errors.idImage ? "border-red-300" : idImageUrl ? "border-emerald-300" : "border-transparent"
+            )}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              {idImageUrl ? (
+                <Check size={18} className="text-emerald-600 flex-none" />
+              ) : (
+                <FileText size={18} className="text-primary-navy/40 flex-none" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-primary-navy truncate">
+                  {idFileName || 'Upload Civil ID / Passport'}
+                </p>
+                <p className="text-[10px] text-primary-navy/50 font-medium">
+                  {idUploading
+                    ? `Uploading... ${idUploadProgress ?? 0}%`
+                    : idImageUrl
+                      ? 'Uploaded successfully'
+                      : 'Required — clear photo (JPG / PNG / PDF)'}
+                </p>
+              </div>
+            </div>
+            {idUploading ? (
+              <div className="w-5 h-5 border-2 border-primary-navy/20 border-t-secondary-gold rounded-full animate-spin flex-none" />
+            ) : (
+              <Upload size={18} className="text-primary-navy/40 flex-none" />
+            )}
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={handleIdUpload}
+              disabled={idUploading}
+            />
+          </label>
+          {errors.idImage && <p className="text-red-500 text-xs font-medium">{errors.idImage}</p>}
+        </div>
+
+        <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.emailOptional')}</label>
           <input
             type="email"
@@ -965,7 +1048,7 @@ export const Booking: React.FC = () => {
 
         <button
           onClick={handleSubmit}
-          disabled={submitting || (!isDayUse && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
+          disabled={submitting || idUploading || !idImageUrl || (!isDayUse && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
           className="w-full bg-primary-navy text-white py-5 rounded-[20px] font-bold text-sm uppercase tracking-widest shadow-xl shadow-primary-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {submitting ? (

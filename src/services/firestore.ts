@@ -230,6 +230,7 @@ export interface FirestoreBooking {
   payment_method: 'thawani' | 'bank_transfer' | 'walk_in';
   receipt_image?: string;
   receiptURL?: string;
+  idImageUrl?: string;
   slot_id?: string;
   slot_name?: string;
   slot_start_time?: string;
@@ -258,6 +259,7 @@ export const firestoreBookings = {
     amount_paid?: number;
     receipt_image?: string;
     receiptURL?: string;
+    idImageUrl?: string;
     slot_id?: string;
     slot_name?: string;
     slot_start_time?: string;
@@ -309,6 +311,7 @@ export const firestoreBookings = {
       payment_method: data.payment_method,
       receipt_image: data.receipt_image || '',
       receiptURL: data.receiptURL || '',
+      idImageUrl: data.idImageUrl || '',
       ...(data.slot_id ? {
         slot_id: data.slot_id,
         slot_name: data.slot_name || '',
