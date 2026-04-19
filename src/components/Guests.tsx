@@ -30,6 +30,7 @@ interface BookingGuest {
   payment_status: string;
   payment_method: string;
   receiptURL: string;
+  idImageUrl?: string;
   created_at: string;
   isPinned: boolean;
   displayStatus: DisplayStatus;
@@ -75,6 +76,7 @@ export const Guests: React.FC = () => {
 
   // Receipt viewer
   const [receiptViewURL, setReceiptViewURL] = useState<string | null>(null);
+  const [idViewURL, setIdViewURL] = useState<string | null>(null);
 
   // Pagination
   const PAGE_SIZE = 20;
@@ -118,6 +120,7 @@ export const Guests: React.FC = () => {
             payment_status: data.payment_status || 'pending',
             payment_method: data.payment_method || '',
             receiptURL: data.receiptURL || '',
+            idImageUrl: data.idImageUrl || '',
             created_at: data.created_at || '',
             isPinned: data.isPinned === true,
             displayStatus: computeDisplayStatus({
@@ -494,6 +497,15 @@ export const Guests: React.FC = () => {
                           {t('guests.viewReceipt')}
                         </button>
                       )}
+                      {guest.idImageUrl && (
+                        <button
+                          onClick={() => setIdViewURL(guest.idImageUrl!)}
+                          className="px-4 py-2.5 rounded-lg border border-secondary-gold/40 bg-secondary-gold/5 text-secondary-gold hover:bg-secondary-gold/10 text-[10px] uppercase font-bold tracking-widest active:scale-[0.98] transition-all flex items-center gap-1.5"
+                        >
+                          <Paperclip size={13} />
+                          View ID
+                        </button>
+                      )}
                     </>
                   )}
                   {guest.displayStatus === 'upcoming' && (
@@ -640,6 +652,52 @@ export const Guests: React.FC = () => {
                   <img
                     src={receiptViewURL}
                     alt="Transfer Receipt"
+                    className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ID Viewer Modal — mirrors the Receipt Viewer structure exactly */}
+      <AnimatePresence>
+        {idViewURL && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-[24px] w-full max-w-lg max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-primary-navy/5">
+                <div className="flex items-center gap-2">
+                  <Paperclip size={16} className="text-secondary-gold" />
+                  <h3 className="font-headline font-bold text-primary-navy">Civil ID / Passport</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={idViewURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-primary-navy/5 text-primary-navy text-[10px] font-bold uppercase tracking-widest hover:bg-primary-navy/10 transition-all"
+                  >
+                    {t('guests.openFullSize')}
+                  </a>
+                  <button onClick={() => setIdViewURL(null)} className="p-2 hover:bg-primary-navy/5 rounded-full">
+                    <X size={18} className="text-primary-navy/40" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-surface-container-low">
+                {idViewURL.toLowerCase().endsWith('.pdf') ? (
+                  <iframe src={idViewURL} className="w-full h-[60vh] rounded-lg border-0" title="ID Document PDF" />
+                ) : (
+                  <img
+                    src={idViewURL}
+                    alt="Civil ID / Passport"
                     className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm"
                     referrerPolicy="no-referrer"
                   />

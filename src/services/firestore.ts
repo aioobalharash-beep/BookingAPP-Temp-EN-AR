@@ -205,6 +205,19 @@ export const firestoreProperties = {
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
   },
+
+  // ── Property details (settings/property_details) ──
+  // Single-document store backing the public site and the Edit Property admin screen.
+  // Accepts any long-form fields (aboutEn, aboutAr, termsOfStay, footerText, description, etc.)
+  // and merges them without clobbering unrelated keys.
+  async getDetails(): Promise<Record<string, any> | null> {
+    const snap = await getDoc(doc(db, 'settings', 'property_details'));
+    return snap.exists() ? (snap.data() as Record<string, any>) : null;
+  },
+
+  async updateProperty(patch: Record<string, any>) {
+    await setDoc(doc(db, 'settings', 'property_details'), patch, { merge: true });
+  },
 };
 
 // ── Bookings ──
@@ -230,6 +243,8 @@ export interface FirestoreBooking {
   payment_method: 'thawani' | 'bank_transfer' | 'walk_in';
   receipt_image?: string;
   receiptURL?: string;
+  idImageUrl?: string;
+  stay_type?: 'day_use' | 'night_stay' | 'event';
   slot_id?: string;
   slot_name?: string;
   slot_start_time?: string;
@@ -258,6 +273,8 @@ export const firestoreBookings = {
     amount_paid?: number;
     receipt_image?: string;
     receiptURL?: string;
+    idImageUrl?: string;
+    stay_type?: 'day_use' | 'night_stay' | 'event';
     slot_id?: string;
     slot_name?: string;
     slot_start_time?: string;
@@ -309,6 +326,8 @@ export const firestoreBookings = {
       payment_method: data.payment_method,
       receipt_image: data.receipt_image || '',
       receiptURL: data.receiptURL || '',
+      idImageUrl: data.idImageUrl || '',
+      ...(data.stay_type ? { stay_type: data.stay_type } : {}),
       ...(data.slot_id ? {
         slot_id: data.slot_id,
         slot_name: data.slot_name || '',

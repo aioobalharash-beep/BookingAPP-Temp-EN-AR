@@ -27,11 +27,19 @@ export const Booking: React.FC = () => {
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [selectedDates, setSelectedDates] = useState<{ start: number | null; end: number | null }>({ start: null, end: null });
+  // Stay type — explicit guest selection. 'event' is a single-day, flat-priced full-day-and-night booking.
+  const [stayType, setStayType] = useState<'day_use' | 'night_stay' | 'event'>('night_stay');
   // Thawani temporarily hidden from the public UI; bank transfer is the only guest-visible option.
   const SHOW_THAWANI = false;
   const [paymentMethod, setPaymentMethod] = useState<'thawani' | 'bank_transfer'>('bank_transfer');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptFileName, setReceiptFileName] = useState('');
+
+  // Civil ID / Passport — uploaded eagerly to Cloudinary; submission blocked until URL is set.
+  const [idFileName, setIdFileName] = useState('');
+  const [idImageUrl, setIdImageUrl] = useState<string | null>(null);
+  const [idUploading, setIdUploading] = useState(false);
+  const [idUploadProgress, setIdUploadProgress] = useState<number | null>(null);
 
   // Upload progress
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -197,6 +205,13 @@ export const Booking: React.FC = () => {
     if (isDayBooked(day)) return;
     setSelectedSlot(null);
 
+    // Day Use is always single-day. Event + Night Stay both support multi-day ranges.
+    if (stayType === 'day_use') {
+      setSelectedDates({ start: day, end: day });
+      setErrors(prev => ({ ...prev, dates: '' }));
+      return;
+    }
+
     if (!selectedDates.start || (selectedDates.start && selectedDates.end)) {
       setSelectedDates({ start: day, end: null });
     } else if (day === selectedDates.start) {
@@ -225,9 +240,15 @@ export const Booking: React.FC = () => {
     setErrors(prev => ({ ...prev, dates: '' }));
   };
 
-  const isDayUse = selectedDates.start !== null && selectedDates.end !== null && selectedDates.start === selectedDates.end;
-  const nights = selectedDates.start && selectedDates.end ? selectedDates.end - selectedDates.start : 0;
+  const isEvent = stayType === 'event';
+  const isDayUse = !isEvent && selectedDates.start !== null && selectedDates.end !== null && selectedDates.start === selectedDates.end;
+  const nights = selectedDates.start && selectedDates.end && selectedDates.start !== selectedDates.end
+    ? selectedDates.end - selectedDates.start
+    : 0;
   const securityDeposit = pricingSettings?.security_deposit ?? property?.security_deposit ?? 50;
+  // Admin-managed per-night Event price. Falls back to ~2× nightly rate if the owner hasn't set one yet.
+  const eventRate = pricingSettings?.event_rate
+    ?? (property?.nightly_rate ? Math.round(property.nightly_rate * 2) : 300);
 
   // Available slots for selected day-use date (overlap-aware)
   const availableSlots = isDayUse && selectedDates.start !== null
@@ -237,6 +258,29 @@ export const Booking: React.FC = () => {
   // Dynamic pricing breakdown
   const priceBreakdown: PriceBreakdown | null = (() => {
     if (selectedDates.start === null || selectedDates.end === null) return null;
+
+    // Event — per-night flat rate; date range identical to Night Stay.
+    if (isEvent) {
+      if (!nights) return null;
+      const perNight: PriceBreakdown['per_night'] = [];
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const cursor = new Date(currentYear, currentMonth, selectedDates.start);
+      for (let i = 0; i < nights; i++) {
+        const dateStr = cursor.toISOString().split('T')[0];
+        perNight.push({ date: dateStr, dayLabel: dayLabels[cursor.getDay()], rate: eventRate, isSpecial: false });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      const subtotal = eventRate * nights;
+      return {
+        nights,
+        isDayUse: false,
+        subtotal,
+        discount_amount: 0,
+        total: subtotal,
+        per_night: perNight,
+      };
+    }
+
     if (!isDayUse && !nights) return null;
     // Wait for slot selection when slots are defined
     if (isDayUse && dayUseSlots.length > 0 && !selectedSlot) return null;
@@ -276,6 +320,12 @@ export const Booking: React.FC = () => {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    if (!idImageUrl) {
+      newErrors.idImage = idUploading
+        ? 'Please wait for the ID upload to finish'
+        : 'Please upload a clear photo of your Civil ID or Passport';
+    }
+
     if (!selectedDates.start || !selectedDates.end) {
       newErrors.dates = 'Please select check-in and check-out dates';
     }
@@ -312,6 +362,30 @@ export const Booking: React.FC = () => {
       folder: 'al-malak-receipts',
       onProgress: (pct) => setUploadProgress(pct),
     }).finally(() => setUploadProgress(null));
+
+  const handleIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIdFileName(file.name);
+    setIdImageUrl(null);
+    setErrors(prev => ({ ...prev, idImage: '' }));
+    setIdUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, {
+        folder: 'al-malak-ids',
+        onProgress: (pct) => setIdUploadProgress(pct),
+      });
+      setIdImageUrl(url);
+    } catch (err: any) {
+      console.error('ID upload failed:', err.message);
+      setErrors(prev => ({ ...prev, idImage: err.message || 'ID upload failed. Please try again.' }));
+      setIdFileName('');
+    } finally {
+      setIdUploading(false);
+      setIdUploadProgress(null);
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = async () => {
     if (!validate() || !property || selectedDates.start === null || selectedDates.end === null) return;
@@ -363,6 +437,8 @@ export const Booking: React.FC = () => {
             depositAmount,
             grandTotal,
             payment_method: 'thawani',
+            idImageUrl: idImageUrl || undefined,
+            stay_type: stayType,
             ...(selectedSlot ? {
               slot_id: selectedSlot.id,
               slot_name: selectedSlot.name,
@@ -433,6 +509,7 @@ export const Booking: React.FC = () => {
         grandTotal,
         payment_method: paymentMethod,
         receiptURL,
+        idImageUrl: idImageUrl || undefined,
         ...(selectedSlot ? {
           slot_id: selectedSlot.id,
           slot_name: selectedSlot.name,
@@ -534,6 +611,55 @@ export const Booking: React.FC = () => {
         </motion.div>
       )}
 
+      {/* Stay Type Selector */}
+      <section className="space-y-3">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+          {t('booking.stayType')} *
+        </label>
+        <div className="grid grid-cols-3 gap-3">
+          {([
+            { value: 'day_use', label: t('booking.stayTypeDayUse'), sub: undefined },
+            { value: 'night_stay', label: t('booking.stayTypeNightStay'), sub: undefined },
+            {
+              value: 'event',
+              label: pricingSettings?.event_category_name?.trim() || t('booking.stayTypeEvent'),
+              sub: t('booking.pricePerNight', { amount: eventRate }),
+            },
+          ] as const).map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                setStayType(opt.value);
+                setSelectedSlot(null);
+                if (opt.value === 'day_use') {
+                  setSelectedDates(prev => prev.start !== null ? { start: prev.start, end: prev.start } : prev);
+                } else {
+                  // Night Stay / Event: if a single-day selection existed, clear the end so the user can pick a range.
+                  setSelectedDates(prev => prev.start !== null && prev.end === prev.start ? { start: prev.start, end: null } : prev);
+                }
+              }}
+              className={cn(
+                "relative p-4 rounded-[18px] border-2 transition-all text-center",
+                stayType === opt.value
+                  ? "border-primary-navy bg-primary-navy/5"
+                  : "border-primary-navy/10 bg-white hover:border-primary-navy/20"
+              )}
+            >
+              {stayType === opt.value && (
+                <div className="absolute top-2 end-2 w-4 h-4 bg-primary-navy rounded-full flex items-center justify-center">
+                  <Check size={10} className="text-white" />
+                </div>
+              )}
+              <p className="text-sm font-bold text-primary-navy">{opt.label}</p>
+              {opt.sub && (
+                <p className="text-[10px] text-primary-navy/50 font-medium mt-0.5">{opt.sub}</p>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Calendar Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -620,7 +746,7 @@ export const Booking: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-3"
         >
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.selectTimeSlot')} *</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('booking.selectDayUseType')} *</label>
           <div className="space-y-2">
             {availableSlots.map(slot => {
               const dow = new Date(currentYear, currentMonth, selectedDates.start!).getDay();
@@ -777,6 +903,51 @@ export const Booking: React.FC = () => {
             />
           </div>
           {errors.phone && <p className="text-red-500 text-xs font-medium">{errors.phone}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+            Civil ID / Passport *
+          </label>
+          <label
+            className={cn(
+              "flex items-center justify-between gap-3 bg-surface-container-low border rounded-xl py-4 px-5 cursor-pointer transition-all hover:bg-surface-container-low/70",
+              errors.idImage ? "border-red-300" : idImageUrl ? "border-emerald-300" : "border-transparent"
+            )}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              {idImageUrl ? (
+                <Check size={18} className="text-emerald-600 flex-none" />
+              ) : (
+                <FileText size={18} className="text-primary-navy/40 flex-none" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-primary-navy truncate">
+                  {idFileName || 'Upload Civil ID / Passport'}
+                </p>
+                <p className="text-[10px] text-primary-navy/50 font-medium">
+                  {idUploading
+                    ? `Uploading... ${idUploadProgress ?? 0}%`
+                    : idImageUrl
+                      ? 'Uploaded successfully'
+                      : 'Required — clear photo (JPG / PNG / PDF)'}
+                </p>
+              </div>
+            </div>
+            {idUploading ? (
+              <div className="w-5 h-5 border-2 border-primary-navy/20 border-t-secondary-gold rounded-full animate-spin flex-none" />
+            ) : (
+              <Upload size={18} className="text-primary-navy/40 flex-none" />
+            )}
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={handleIdUpload}
+              disabled={idUploading}
+            />
+          </label>
+          {errors.idImage && <p className="text-red-500 text-xs font-medium">{errors.idImage}</p>}
         </div>
 
         <div className="space-y-2">
@@ -965,7 +1136,7 @@ export const Booking: React.FC = () => {
 
         <button
           onClick={handleSubmit}
-          disabled={submitting || (!isDayUse && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
+          disabled={submitting || idUploading || !idImageUrl || (!isDayUse && nights === 0) || maintenanceMode || (!!termsOfStay && !termsAccepted)}
           className="w-full bg-primary-navy text-white py-5 rounded-[20px] font-bold text-sm uppercase tracking-widest shadow-xl shadow-primary-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {submitting ? (
