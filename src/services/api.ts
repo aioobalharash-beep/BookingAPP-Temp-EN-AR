@@ -11,10 +11,11 @@ import {
   firestoreReports,
 } from './firestore';
 
-// Auth — Firestore
+// Auth — Firebase Authentication (user profile stored in Firestore users/{uid})
 export const authApi = {
   login: (email: string, password: string) => firestoreUsers.login(email, password),
   register: (data: { name: string; email: string; password: string; phone?: string }) => firestoreUsers.register(data),
+  logout: () => firestoreUsers.logout(),
   me: (id: string) => firestoreUsers.getById(id),
 };
 
