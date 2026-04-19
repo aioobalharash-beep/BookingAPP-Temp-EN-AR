@@ -2,6 +2,7 @@
 export interface ClientTheme {
   primary: string;
   secondary: string;
+  background?: string;
 }
 
 export interface ClientAdmin {
@@ -22,21 +23,22 @@ export interface ClientConfig {
   social: ClientSocial;
 }
 
-// --- YOUR CHALET DATA (Change these values!) ---
+// --- AL MALAK CHALET DATA ---
 export const CLIENT_CONFIG: ClientConfig = {
-  chaletName: 'Cloud Chalet',
+  chaletName: 'Al Malak Chalet',
   logoPath: '/assets/brand/logo.png',
   theme: {
-    primary: '#5B9BD5',   // That Sky Blue you wanted
-    secondary: '#A5C8E1', // The Cloud Blue
+    primary: '#2B3D8B',   // Deep Navy from Logo
+    secondary: '#7089C4', // Soft Blue for UI depth
+    background: '#F5F3ED' // Cream Background for a premium feel
   },
   admin: {
-    email: 'Admin@cloud.om',
-    name: 'Yousif',
+    email: 'nooralmalak901@gmail.com',
+    name: 'Al Malak Admin', // You can update this to the owner's actual name later
   },
   social: {
-    whatsapp: '96893311525',
-    instagram: 'https://www.instagram.com/cloud.chalet1/',
+    whatsapp: '96871919666', // Properly formatted for wa.me links
+    instagram: 'https://www.instagram.com/almalak_chalet/',
   },
 };
 
