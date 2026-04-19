@@ -89,7 +89,6 @@ interface FooterProps {
 const Footer = React.memo<FooterProps>(({ chaletName, footerText, whatsappNumber, licenseNumber, termsLabel, aboutLabel, onTerms, onAbout }) => {
   const config = getClientConfig();
   const waHref = whatsappHref(config.social.whatsapp) || whatsappHref(whatsappNumber);
-  const instagramHref = config.social.instagram;
   const year = new Date().getFullYear();
   return (
     <footer className="w-full py-12 px-8 bg-white border-t border-primary-navy/5 flex flex-col items-center gap-6">
@@ -113,11 +112,15 @@ const Footer = React.memo<FooterProps>(({ chaletName, footerText, whatsappNumber
         <button onClick={onAbout} className="text-xs text-primary-navy/60 underline font-bold">{aboutLabel}</button>
       </div>
       <div className="flex gap-8 mt-2">
-        {instagramHref && (
-          <a href={instagramHref} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-primary-navy/40 hover:text-secondary-gold transition-colors">
-            <Instagram size={20} />
-          </a>
-        )}
+        <a
+          href="https://www.instagram.com/almalak_chalet/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram"
+          className="text-primary-navy/40 hover:text-secondary-gold transition-colors"
+        >
+          <Instagram size={20} />
+        </a>
         {waHref && (
           <a href={waHref} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="text-primary-navy/40 hover:text-secondary-gold transition-colors">
             <MessageCircle size={20} />
