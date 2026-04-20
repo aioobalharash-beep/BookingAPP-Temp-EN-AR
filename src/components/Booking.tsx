@@ -883,7 +883,7 @@ export const Booking: React.FC = () => {
             type="text"
             value={guestName}
             onChange={(e) => { setGuestName(e.target.value); setErrors(prev => ({ ...prev, name: '' })); }}
-            placeholder="e.g. Ahmed Al-Said"
+            placeholder={t('booking.placeholderName')}
             className={cn(
               "w-full bg-surface-container-low border rounded-xl py-4 px-6 focus:ring-1 focus:ring-secondary-gold/50 placeholder:text-primary-navy/20 text-sm",
               errors.name ? "border-red-300" : "border-transparent"

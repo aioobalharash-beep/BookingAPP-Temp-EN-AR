@@ -153,6 +153,7 @@
     "maintenanceDesc": "We are not accepting new bookings at the moment. Please check back soon.",
     "guestDetails": "Guest Details",
     "fullName": "Full Name",
+    "placeholderName": "e.g. Ahmed Al-Said",
     "phone": "Phone",
     "emailOptional": "Email (Optional)",
     "stayType": "Stay Type",
