@@ -42,7 +42,11 @@
     "confirmed": "مؤكد",
     "pending": "معلق",
     "today": "اليوم",
-    "bookings": "حجوزات"
+    "bookings": "حجوزات",
+    "administration": "الإدارة",
+    "actions": "الإجراءات",
+    "amount": "المبلغ",
+    "date": "التاريخ"
   },
   "dashboard": {
     "greeting": "السلام عليكم",
@@ -282,13 +286,39 @@
     "unpaid": "غير مدفوعة",
     "noInvoices": "لا توجد فواتير",
     "downloadPdf": "تحميل PDF",
-    "sendWhatsapp": "إرسال واتساب"
+    "sendWhatsapp": "إرسال واتساب",
+    "latestBookingInvoices": "أحدث فواتير الحجوزات",
+    "latestBookingInvoicesDesc": "فواتير فردية من الحجوزات الأخيرة",
+    "bookingId": "رقم الحجز",
+    "guest": "الضيف",
+    "businessTaxReports": "تقارير ضرائب العمل",
+    "businessTaxReportsDesc": "ملخصات شهرية لضريبة القيمة المضافة للحجوزات المؤكدة",
+    "revenue": "الإيرادات",
+    "vat": "ضريبة القيمة المضافة (٥٪)",
+    "downloadVatReport": "تحميل تقرير الضريبة",
+    "taxId": "الرقم الضريبي",
+    "vatRate": "نسبة الضريبة"
   },
   "reports": {
     "financialReports": "التقارير المالية",
     "totalRevenue": "إجمالي الإيرادات",
     "vatCollected": "ضريبة القيمة المضافة",
     "avgBookingValue": "متوسط قيمة الحجز",
-    "occupancyRate": "نسبة الإشغال"
+    "occupancyRate": "نسبة الإشغال",
+    "selectDateRange": "اختر النطاق الزمني",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "generateReport": "إنشاء التقرير",
+    "generateReportDesc": "أنشئ تقارير مخصصة لأي نطاق زمني",
+    "averageStay": "متوسط مدة الإقامة",
+    "bookingDetails": "تفاصيل الحجز",
+    "confirmed": "مؤكد",
+    "noDataAvailable": "لا توجد بيانات لهذه الفترة",
+    "noDataHint": "حاول تعديل النطاق الزمني للعثور على الحجوزات المؤكدة.",
+    "downloadPdfReport": "تحميل تقرير PDF",
+    "generating": "جارٍ الإنشاء…",
+    "nightsCol": "الليالي",
+    "datesCol": "التواريخ",
+    "totals": "المجاميع"
   }
 }

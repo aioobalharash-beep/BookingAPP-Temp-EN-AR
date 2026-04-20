@@ -42,7 +42,11 @@
     "confirmed": "Confirmed",
     "pending": "Pending",
     "today": "Today",
-    "bookings": "bookings"
+    "bookings": "bookings",
+    "administration": "Administration",
+    "actions": "Actions",
+    "amount": "Amount",
+    "date": "Date"
   },
   "dashboard": {
     "greeting": "Assalamu Alaikum",
@@ -282,13 +286,39 @@
     "unpaid": "Unpaid",
     "noInvoices": "No invoices found",
     "downloadPdf": "Download PDF",
-    "sendWhatsapp": "Send WhatsApp"
+    "sendWhatsapp": "Send WhatsApp",
+    "latestBookingInvoices": "Latest Booking Invoices",
+    "latestBookingInvoicesDesc": "Individual invoices from recent bookings",
+    "bookingId": "Booking ID",
+    "guest": "Guest",
+    "businessTaxReports": "Business Tax Reports",
+    "businessTaxReportsDesc": "Monthly VAT summaries for confirmed bookings",
+    "revenue": "Revenue",
+    "vat": "VAT (5%)",
+    "downloadVatReport": "Download VAT Report",
+    "taxId": "Tax ID",
+    "vatRate": "VAT Rate"
   },
   "reports": {
     "financialReports": "Financial Reports",
     "totalRevenue": "Total Revenue",
     "vatCollected": "VAT Collected",
     "avgBookingValue": "Avg. Booking Value",
-    "occupancyRate": "Occupancy Rate"
+    "occupancyRate": "Occupancy Rate",
+    "selectDateRange": "Select Date Range",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "generateReport": "Generate Report",
+    "generateReportDesc": "Generate custom reports for any date range",
+    "averageStay": "Average Stay",
+    "bookingDetails": "Booking Details",
+    "confirmed": "confirmed",
+    "noDataAvailable": "No data available for this period",
+    "noDataHint": "Try adjusting your date range to find confirmed bookings.",
+    "downloadPdfReport": "Download PDF Report",
+    "generating": "Generating...",
+    "nightsCol": "Nights",
+    "datesCol": "Dates",
+    "totals": "Totals"
   }
 }
