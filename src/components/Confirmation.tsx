@@ -99,15 +99,6 @@ export const Confirmation: React.FC = () => {
     }
   };
 
-  const handleLocationPin = () => {
-    const phone = booking.guest_phone?.replace(/[^\d]/g, '') || '';
-    const checkInFormatted = new Date(booking.check_in).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-    const message = encodeURIComponent(
-      `Al Malak Chalet\n\nHere is your property location for your upcoming stay:\nhttps://maps.google.com/?q=23.5880,58.3829\n\nCheck-in: ${checkInFormatted}\n\nWe look forward to welcoming you!`
-    );
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-20 sm:py-16">
       <motion.div
@@ -188,6 +179,20 @@ export const Confirmation: React.FC = () => {
           </p>
         </motion.div>
 
+        {/* Get Location — primary action below summary */}
+        <motion.a
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          href="https://maps.app.goo.gl/HHD7qjVXwmVZ9KjeA"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full bg-secondary-gold text-primary-navy py-4 rounded-[20px] font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg shadow-secondary-gold/20"
+        >
+          <MapPin size={18} />
+          {t('confirmation.getLocation')}
+        </motion.a>
+
         {/* Conditional Invoice / Bank Transfer Note */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -217,15 +222,6 @@ export const Confirmation: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Location Pin — always visible */}
-          <button
-            onClick={handleLocationPin}
-            className="w-full bg-white border-2 border-secondary-gold text-secondary-gold py-4 rounded-[20px] font-bold text-sm flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all hover:bg-secondary-gold/5"
-          >
-            <MapPin size={18} />
-            {t('confirmation.getLocationPin')}
-          </button>
 
           <button
             onClick={() => navigate('/')}
