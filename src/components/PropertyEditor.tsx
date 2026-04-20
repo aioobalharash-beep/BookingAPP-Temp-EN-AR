@@ -34,6 +34,8 @@ interface PropertyDetails {
   quickFacts?: { icon: string; label: string; label_ar: string }[];
   aboutEn: string;
   aboutAr: string;
+  termsEn: string;
+  termsAr: string;
 }
 
 const DEFAULT_PRICING: PricingSettings = {
@@ -78,6 +80,8 @@ const DEFAULT_DATA: PropertyDetails = {
   licenseNumber: '',
   aboutEn: '',
   aboutAr: '',
+  termsEn: '',
+  termsAr: '',
 };
 
 const inputClass = "w-full bg-pearl-white border border-primary-navy/10 rounded-xl py-3 px-4 text-sm font-medium focus:ring-1 focus:ring-secondary-gold/50 outline-none";
@@ -136,6 +140,8 @@ const PropertyEditorComponent: React.FC = () => {
             pricing: { ...DEFAULT_PRICING, ...migratePricing(data.pricing || {}) },
             aboutEn: typeof data.aboutEn === 'string' ? data.aboutEn : '',
             aboutAr: typeof data.aboutAr === 'string' ? data.aboutAr : '',
+            termsEn: typeof data.termsEn === 'string' ? data.termsEn : '',
+            termsAr: typeof data.termsAr === 'string' ? data.termsAr : '',
           });
         }
       })
@@ -659,11 +665,51 @@ const PropertyEditorComponent: React.FC = () => {
         </div>
       </section>
 
-      {/* Terms of Stay */}
+      {/* Terms of Stay — Public Page */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Terms of Stay</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Terms of Stay — Public Page</h3>
+        </div>
+        <p className="text-[10px] text-primary-navy/40 font-medium">
+          Long-form rules and policies shown on the public /terms page. Use blank lines between rules; line breaks are preserved.
+        </p>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Terms of Stay (English)</label>
+          <textarea
+            value={form.termsEn}
+            onChange={(e) => setForm(prev => ({ ...prev, termsEn: e.target.value }))}
+            rows={12}
+            placeholder={"e.g.\n1. Booking & Payment\nAll reservations require a security deposit at the time of booking...\n\n2. Check-In & Check-Out\nCheck-in is available from 3:00 PM..."}
+            className={cn(inputClass, "leading-relaxed resize-none")}
+          />
+          <p className="text-[10px] text-primary-navy/40 font-medium">
+            {form.termsEn.length > 0 ? `${form.termsEn.length} characters` : 'Leave blank to show the default terms text.'}
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
+            <Languages size={12} /> Terms of Stay (Arabic)
+          </label>
+          <textarea
+            dir="rtl"
+            value={form.termsAr}
+            onChange={(e) => setForm(prev => ({ ...prev, termsAr: e.target.value }))}
+            rows={12}
+            placeholder="اكتب شروط الإقامة بالعربية..."
+            className={cn(inputClass, "leading-relaxed resize-none")}
+          />
+          <p className="text-[10px] text-primary-navy/40 font-medium">
+            {form.termsAr.length > 0 ? `${form.termsAr.length} characters` : 'Leave blank to show the English version for Arabic users.'}
+          </p>
+        </div>
+      </section>
+
+      {/* Terms of Stay — Booking Checkout Popup */}
+      <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
+        <div className="flex items-center gap-2">
+          <FileText size={16} className="text-secondary-gold" />
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Terms of Stay — Booking Checkout</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
           Define rules, policies, refund terms, and conditions that guests must accept before booking. This text is displayed in a pop-up during checkout.
