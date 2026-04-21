@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { sendPasswordResetEmail } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from './LanguageToggle';
-import { getClientConfig } from '../config/clientConfig';
+import { getClientConfig, isAdminEmail } from '../config/clientConfig';
 import { BrandMark } from './BrandMark';
 
 export const Login: React.FC = () => {
@@ -45,9 +45,8 @@ export const Login: React.FC = () => {
 
     try {
       const signedIn = await login(email, password);
-      const adminEmail = (config.admin.email || '').trim().toLowerCase();
-      const entered = email.trim().toLowerCase();
-      if (signedIn.role === 'admin' && adminEmail && entered !== adminEmail) {
+      // Admin role must match an email on the allowlist; anything else is signed out.
+      if (signedIn.role === 'admin' && !isAdminEmail(signedIn.email)) {
         await logout();
         setError('This account is not authorized as an administrator.');
         setLoading(false);
