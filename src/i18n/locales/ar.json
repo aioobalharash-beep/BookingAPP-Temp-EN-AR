@@ -254,7 +254,10 @@
     "backToReviews": "العودة للتقييمات",
     "noReviews": "لا توجد تقييمات بعد. كن أول من يشارك تجربته!",
     "tapToRate": "انقر للتقييم",
-    "feedbackHelps": "تقييمك يساعدنا في تحسين وتطوير تجربة الإقامة في {{name}}."
+    "feedbackHelps": "تقييمك يساعدنا في تحسين وتطوير تجربة الإقامة في {{name}}.",
+    "placeholderName": "مثال: أحمد السعيدي",
+    "placeholderStayDetails": "مثال: مارس ٢٠٢٦، ٣ ليالٍ",
+    "placeholderExperience": "...أخبرنا عن تجربة إقامتك في شاليه الملاك"
   },
   "confirmation": {
     "bookingConfirmed": "تم تأكيد الحجز!",
