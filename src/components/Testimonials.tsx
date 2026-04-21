@@ -117,7 +117,7 @@ export const Testimonials: React.FC = () => {
               type="text"
               value={form.guest_name}
               onChange={(e) => setForm(p => ({ ...p, guest_name: e.target.value }))}
-              placeholder="e.g. Ahmed Al-Said"
+              placeholder={t('testimonials.placeholderName')}
               className={cn("w-full bg-surface-container-low border rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20", errors.guest_name ? "border-red-300" : "border-transparent")}
             />
             {errors.guest_name && <p className="text-red-500 text-xs">{errors.guest_name}</p>}
@@ -145,7 +145,7 @@ export const Testimonials: React.FC = () => {
               type="text"
               value={form.stay_details}
               onChange={(e) => setForm(p => ({ ...p, stay_details: e.target.value }))}
-              placeholder="e.g. March 2026, 3 nights"
+              placeholder={t('testimonials.placeholderStayDetails')}
               className="w-full bg-surface-container-low border border-transparent rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20"
             />
           </div>
@@ -176,7 +176,7 @@ export const Testimonials: React.FC = () => {
             <textarea
               value={form.text}
               onChange={(e) => setForm(p => ({ ...p, text: e.target.value }))}
-              placeholder="Tell us about your stay at Al Malak Chalet..."
+              placeholder={t('testimonials.placeholderExperience')}
               rows={4}
               className={cn("w-full bg-surface-container-low border rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20 resize-none", errors.text ? "border-red-300" : "border-transparent")}
             />

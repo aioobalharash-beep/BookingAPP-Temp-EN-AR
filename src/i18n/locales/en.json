@@ -254,7 +254,10 @@
     "backToReviews": "Back to Reviews",
     "noReviews": "No reviews yet. Be the first to share your experience!",
     "tapToRate": "Tap to rate",
-    "feedbackHelps": "Your feedback helps us craft the perfect retreat experience at {{name}}."
+    "feedbackHelps": "Your feedback helps us craft the perfect retreat experience at {{name}}.",
+    "placeholderName": "e.g. Ahmed Al-Said",
+    "placeholderStayDetails": "e.g. March 2026, 3 nights",
+    "placeholderExperience": "Tell us about your stay at Al Malak Chalet..."
   },
   "confirmation": {
     "bookingConfirmed": "Booking Confirmed!",
