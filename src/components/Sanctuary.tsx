@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Calendar as CalendarIcon, Instagram, MessageCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Instagram, MessageCircle, Check } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -224,13 +224,15 @@ export const Sanctuary: React.FC = () => {
           <div className="h-4 bg-primary-navy/5 rounded w-full" />
           <div className="h-4 bg-primary-navy/5 rounded w-3/4" />
         </div>
-        <div className="px-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="px-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white p-4 rounded-2xl border border-primary-navy/5 space-y-2">
-              <div className="h-2.5 bg-primary-navy/5 rounded w-16" />
-              <div className="h-3 bg-primary-navy/5 rounded w-full" />
-              <div className="h-3 bg-primary-navy/5 rounded w-3/4" />
-              <div className="h-3 bg-primary-navy/5 rounded w-5/6" />
+            <div key={i} className="h-full bg-white p-6 rounded-2xl border border-primary-navy/5 shadow-sm space-y-4">
+              <div className="h-5 bg-primary-navy/5 rounded w-24" />
+              <div className="space-y-2.5">
+                <div className="h-4 bg-primary-navy/5 rounded w-full" />
+                <div className="h-4 bg-primary-navy/5 rounded w-3/4" />
+                <div className="h-4 bg-primary-navy/5 rounded w-5/6" />
+              </div>
             </div>
           ))}
         </div>
@@ -283,7 +285,7 @@ export const Sanctuary: React.FC = () => {
       {/* Resort Guide — Categorized Feature Tiles */}
       {data.featureSections && data.featureSections.length > 0 && (
         <section className="px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {data.featureSections.map((section, i) => {
               const title = lang === 'ar' ? (section.titleAr || section.titleEn) : (section.titleEn || section.titleAr);
               return (
@@ -291,18 +293,25 @@ export const Sanctuary: React.FC = () => {
                   key={i}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="bg-white p-4 rounded-2xl border border-primary-navy/5 shadow-sm"
+                  transition={{ delay: i * 0.05 }}
+                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  className="h-full bg-white p-6 rounded-2xl border border-primary-navy/5 shadow-sm"
                 >
-                  <h4 className="text-[10px] font-bold text-secondary-gold uppercase tracking-widest mb-2">
+                  <h4 className="font-headline text-lg font-bold text-secondary-gold mb-4">
                     {title}
                   </h4>
-                  <ul className="space-y-1">
-                    {section.items.map((item, j) => (
-                      <li key={j} className="text-xs font-bold text-primary-navy/80 leading-snug">
-                        {lang === 'ar' ? (item.ar || item.en) : (item.en || item.ar)}
-                      </li>
-                    ))}
+                  <ul className="space-y-2.5">
+                    {section.items.map((item, j) => {
+                      const label = lang === 'ar' ? (item.ar || item.en) : (item.en || item.ar);
+                      return (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check size={14} strokeWidth={2.5} className="text-secondary-gold shrink-0 mt-[5px]" />
+                          <span className="text-base font-medium text-primary-navy/85 leading-relaxed">
+                            {label}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </motion.div>
               );
