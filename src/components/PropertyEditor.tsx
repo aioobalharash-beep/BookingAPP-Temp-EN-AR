@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { OptimizedImage } from './OptimizedImage';
-import { ArrowLeft, Upload, X, Plus, Save, Check, Calendar, Tag, Percent, Landmark, Sun, Clock, FileText, Languages } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Save, Check, Calendar, Tag, Percent, Landmark, Sun, Clock, FileText, Languages, Trash2, LayoutGrid } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -12,6 +12,32 @@ import { type BilingualField, toBilingual } from '../utils/bilingual';
 
 interface GalleryImage { url: string; label: string; }
 
+interface FeatureItem {
+  en: string;
+  ar: string;
+}
+
+interface FeatureSection {
+  titleEn: string;
+  titleAr: string;
+  items: FeatureItem[];
+}
+
+const normalizeFeatureSections = (raw: unknown): FeatureSection[] => {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((s: any) => ({
+    titleEn: typeof s?.titleEn === 'string' ? s.titleEn : typeof s?.title === 'string' ? s.title : '',
+    titleAr: typeof s?.titleAr === 'string' ? s.titleAr : '',
+    items: Array.isArray(s?.items)
+      ? s.items.map((it: any) =>
+          typeof it === 'string'
+            ? { en: it, ar: '' }
+            : { en: typeof it?.en === 'string' ? it.en : '', ar: typeof it?.ar === 'string' ? it.ar : '' }
+        )
+      : [],
+  }));
+};
+
 interface PropertyDetails {
   name: BilingualField;
   capacity: number;
@@ -19,8 +45,7 @@ interface PropertyDetails {
   nightly_rate: number;
   headline: BilingualField;
   description: BilingualField;
-  features: string[];
-  features_ar: string[];
+  featureSections: FeatureSection[];
   gallery: GalleryImage[];
   pricing: PricingSettings;
   bank_name: string;
@@ -62,8 +87,7 @@ const DEFAULT_DATA: PropertyDetails = {
   nightly_rate: 120,
   headline: { en: 'Curated Excellence', ar: '' },
   description: { en: 'Nestled in the heart of the Omani landscape, Al Malak Chalet offers an unparalleled blend of modern luxury and heritage-inspired architecture. Every corner of this estate has been curated to provide a seamless flow between indoor relaxation and outdoor majesty.', ar: '' },
-  features: ['Concierge Service', 'Daily Maintenance', 'Private Parking', 'Secure Perimeter'],
-  features_ar: ['', '', '', ''],
+  featureSections: [],
   gallery: [
     { url: 'https://picsum.photos/seed/oman-bedroom-1/800/1000', label: 'Master Suite: Serene Sands' },
     { url: 'https://picsum.photos/seed/oman-bedroom-2/800/1000', label: 'Guest Wing: Golden Hour' },
@@ -94,8 +118,8 @@ const PropertyEditorComponent: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [newFeature, setNewFeature] = useState('');
   const [newLabel, setNewLabel] = useState('');
+  const [newItemInputs, setNewItemInputs] = useState<Record<number, { en: string; ar: string }>>({});
 
   // Special date form
   const [specialDate, setSpecialDate] = useState('');
@@ -106,7 +130,6 @@ const PropertyEditorComponent: React.FC = () => {
   const [newSlotNameAr, setNewSlotNameAr] = useState('');
   const [newSlotStart, setNewSlotStart] = useState('11:00');
   const [newSlotEnd, setNewSlotEnd] = useState('16:00');
-  const [newFeatureAr, setNewFeatureAr] = useState('');
   const [newFactIcon, setNewFactIcon] = useState('');
   const [newFactLabel, setNewFactLabel] = useState('');
   const [newFactLabelAr, setNewFactLabelAr] = useState('');
@@ -126,7 +149,6 @@ const PropertyEditorComponent: React.FC = () => {
       .then(snap => {
         if (snap.exists()) {
           const data = snap.data() as any;
-          const features = data.features || DEFAULT_DATA.features;
           setForm({
             ...DEFAULT_DATA,
             ...data,
@@ -135,8 +157,7 @@ const PropertyEditorComponent: React.FC = () => {
             description: toBilingual(data.description),
             termsOfStay: toBilingual(data.termsOfStay),
             footerText: toBilingual(data.footerText),
-            features,
-            features_ar: data.features_ar || features.map(() => ''),
+            featureSections: normalizeFeatureSections(data.featureSections),
             pricing: { ...DEFAULT_PRICING, ...migratePricing(data.pricing || {}) },
             aboutEn: typeof data.aboutEn === 'string' ? data.aboutEn : '',
             aboutAr: typeof data.aboutAr === 'string' ? data.aboutAr : '',
@@ -199,20 +220,65 @@ const PropertyEditorComponent: React.FC = () => {
     quickFacts: (prev.quickFacts || []).filter((_, j) => j !== i),
   }));
 
-  const addFeature = () => {
-    const t = newFeature.trim();
-    const tAr = newFeatureAr.trim();
-    if (t && !form.features.includes(t)) {
-      setForm(prev => ({ ...prev, features: [...prev.features, t], features_ar: [...(prev.features_ar || []), tAr] }));
-      setNewFeature('');
-      setNewFeatureAr('');
-    }
+  const addSection = () => {
+    setForm(prev => ({
+      ...prev,
+      featureSections: [...prev.featureSections, { titleEn: '', titleAr: '', items: [] }],
+    }));
   };
-  const removeFeature = (i: number) => setForm(prev => ({
-    ...prev,
-    features: prev.features.filter((_, j) => j !== i),
-    features_ar: (prev.features_ar || []).filter((_, j) => j !== i),
-  }));
+
+  const removeSection = (idx: number) => {
+    setForm(prev => ({
+      ...prev,
+      featureSections: prev.featureSections.filter((_, i) => i !== idx),
+    }));
+    setNewItemInputs(prev => {
+      const next = { ...prev };
+      delete next[idx];
+      return next;
+    });
+  };
+
+  const updateSectionTitle = (idx: number, patch: Partial<Pick<FeatureSection, 'titleEn' | 'titleAr'>>) => {
+    setForm(prev => ({
+      ...prev,
+      featureSections: prev.featureSections.map((s, i) => i === idx ? { ...s, ...patch } : s),
+    }));
+  };
+
+  const addItemToSection = (idx: number) => {
+    const draft = newItemInputs[idx] || { en: '', ar: '' };
+    const en = draft.en.trim();
+    const ar = draft.ar.trim();
+    if (!en && !ar) return;
+    setForm(prev => ({
+      ...prev,
+      featureSections: prev.featureSections.map((s, i) =>
+        i === idx ? { ...s, items: [...s.items, { en, ar }] } : s
+      ),
+    }));
+    setNewItemInputs(prev => ({ ...prev, [idx]: { en: '', ar: '' } }));
+  };
+
+  const updateItem = (sectionIdx: number, itemIdx: number, patch: Partial<FeatureItem>) => {
+    setForm(prev => ({
+      ...prev,
+      featureSections: prev.featureSections.map((s, i) =>
+        i === sectionIdx
+          ? { ...s, items: s.items.map((it, j) => j === itemIdx ? { ...it, ...patch } : it) }
+          : s
+      ),
+    }));
+  };
+
+  const removeItemFromSection = (sectionIdx: number, itemIdx: number) => {
+    setForm(prev => ({
+      ...prev,
+      featureSections: prev.featureSections.map((s, i) =>
+        i === sectionIdx ? { ...s, items: s.items.filter((_, j) => j !== itemIdx) } : s
+      ),
+    }));
+  };
 
   const addSpecialDate = () => {
     if (!specialDate || !specialPrice) return;
@@ -876,36 +942,129 @@ const PropertyEditorComponent: React.FC = () => {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Feature Sections */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-4">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Features</h3>
-        <div className="space-y-2">
-          {form.features.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 bg-pearl-white border border-primary-navy/10 rounded-xl px-4 py-2.5">
-              <span className="text-xs font-bold text-primary-navy min-w-[120px]">{f}</span>
-              <input
-                type="text"
-                dir="rtl"
-                value={(form.features_ar || [])[i] || ''}
-                onChange={(e) => setForm(prev => {
-                  const updated = [...(prev.features_ar || prev.features.map(() => ''))];
-                  updated[i] = e.target.value;
-                  return { ...prev, features_ar: updated };
-                })}
-                placeholder="الترجمة العربية"
-                className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-secondary-gold/50 outline-none"
-              />
-              <button onClick={() => removeFeature(i)} className="text-primary-navy/30 hover:text-red-500 transition-colors"><X size={14} /></button>
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+          <LayoutGrid size={16} className="text-secondary-gold" />
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Feature Sections</h3>
         </div>
-        <div className="flex gap-2">
-          <input type="text" value={newFeature} onChange={(e) => setNewFeature(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addFeature()} placeholder="Feature (English)" className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
-          <input type="text" dir="rtl" value={newFeatureAr} onChange={(e) => setNewFeatureAr(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addFeature()} placeholder="بالعربية (اختياري)" className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
-          <button onClick={addFeature} disabled={!newFeature.trim()} className="px-4 py-2.5 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30">
-            <Plus size={16} />
-          </button>
+        <p className="text-[10px] text-primary-navy/40 font-medium">
+          Group property features into themed sections (e.g. Kitchen, Bedrooms, Outdoor). Each section is shown as a card in the guest view.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {form.featureSections.map((section, idx) => {
+            const draft = newItemInputs[idx] || { en: '', ar: '' };
+            const canAddItem = !!(draft.en.trim() || draft.ar.trim());
+            return (
+              <div key={idx} className="bg-pearl-white border border-primary-navy/10 rounded-2xl p-4 space-y-4">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Title (English)</label>
+                      <input
+                        type="text"
+                        value={section.titleEn}
+                        onChange={(e) => updateSectionTitle(idx, { titleEn: e.target.value })}
+                        placeholder="e.g. Kitchen"
+                        className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1">
+                        <Languages size={10} /> Title (Arabic)
+                      </label>
+                      <input
+                        type="text"
+                        dir="rtl"
+                        value={section.titleAr}
+                        onChange={(e) => updateSectionTitle(idx, { titleAr: e.target.value })}
+                        placeholder="مثال: المطبخ"
+                        className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeSection(idx)}
+                    aria-label="Delete section"
+                    className="mt-5 p-2 text-primary-navy/30 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  {section.items.map((item, j) => (
+                    <div key={j} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={item.en}
+                        onChange={(e) => updateItem(idx, j, { en: e.target.value })}
+                        placeholder="English"
+                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      />
+                      <input
+                        type="text"
+                        dir="rtl"
+                        value={item.ar}
+                        onChange={(e) => updateItem(idx, j, { ar: e.target.value })}
+                        placeholder="العربية"
+                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      />
+                      <button
+                        onClick={() => removeItemFromSection(idx, j)}
+                        aria-label="Remove item"
+                        className="p-1.5 text-primary-navy/25 hover:text-red-500 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {section.items.length === 0 && (
+                    <p className="text-[10px] text-primary-navy/30 font-medium italic px-1">No items yet — add one below.</p>
+                  )}
+                </div>
+
+                <div className="border-t border-primary-navy/5 pt-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40 mb-1.5">Add Item</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={draft.en}
+                      onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), en: e.target.value } }))}
+                      onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
+                      placeholder="English (e.g. Fridge)"
+                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                    />
+                    <input
+                      type="text"
+                      dir="rtl"
+                      value={draft.ar}
+                      onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), ar: e.target.value } }))}
+                      onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
+                      placeholder="بالعربية (مثال: ثلاجة)"
+                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                    />
+                    <button
+                      onClick={() => addItemToSection(idx)}
+                      disabled={!canAddItem}
+                      className="px-3 py-2 bg-primary-navy/5 rounded-lg text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        <button
+          onClick={addSection}
+          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-primary-navy/15 rounded-2xl text-primary-navy/50 hover:border-secondary-gold/50 hover:text-secondary-gold hover:bg-secondary-gold/[0.02] transition-all text-xs font-bold uppercase tracking-widest"
+        >
+          <Plus size={14} /> Add New Section
+        </button>
       </section>
 
       {/* Save */}

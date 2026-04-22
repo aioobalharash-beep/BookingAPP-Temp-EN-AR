@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Users, Ruler, CheckCircle2, Calendar as CalendarIcon, Instagram, MessageCircle, Bed, Bath, Car, Wifi, Wind, Flame, Waves, TreePalm, Shield, Star, Coffee, Utensils, Tv, Dumbbell, Baby, Sofa } from 'lucide-react';
+import { Calendar as CalendarIcon, Instagram, MessageCircle, Check } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -68,6 +68,17 @@ const getMinPrice = (pricing: PricingSettings | undefined, fallback: number): nu
   return minRate;
 };
 
+interface FeatureItem {
+  en: string;
+  ar: string;
+}
+
+interface FeatureSection {
+  titleEn: string;
+  titleAr: string;
+  items: FeatureItem[];
+}
+
 interface PropertyDetails {
   name: string | BilingualField;
   capacity: number;
@@ -75,11 +86,9 @@ interface PropertyDetails {
   nightly_rate: number;
   headline: string | BilingualField;
   description: string | BilingualField;
-  features: string[];
-  features_ar?: string[];
+  featureSections: FeatureSection[];
   gallery: { url: string; label: string }[];
   pricing?: PricingSettings;
-  quickFacts?: { icon: string; label: string; label_ar: string }[];
   footerText?: string | BilingualField;
   whatsappNumber?: string;
   licenseNumber?: string;
@@ -92,36 +101,13 @@ const DEFAULTS: PropertyDetails = {
   nightly_rate: 120,
   headline: 'Curated Excellence',
   description: 'Nestled in the heart of the Omani landscape, Al Malak Chalet offers an unparalleled blend of modern luxury and heritage-inspired architecture. Every corner of this estate has been curated to provide a seamless flow between indoor relaxation and outdoor majesty.',
-  features: ['Concierge Service', 'Daily Maintenance', 'Private Parking', 'Secure Perimeter'],
+  featureSections: [],
   gallery: [
     { url: 'https://picsum.photos/seed/oman-bedroom-1/800/1000', label: 'Master Suite: Serene Sands' },
     { url: 'https://picsum.photos/seed/oman-bedroom-2/800/1000', label: 'Guest Wing: Golden Hour' },
     { url: 'https://picsum.photos/seed/oman-kitchen/800/1000', label: 'Culinary Studio' },
   ],
 };
-
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Users, Ruler, Bed, Bath, Car, Wifi, Wind, Flame, Waves, TreePalm, Shield, Star, Coffee, Utensils, Tv, Dumbbell, Baby, Sofa,
-  BBQ: Flame,
-  Pool: Waves,
-  GardenLounge: Sofa,
-};
-
-interface QuickFactCardProps {
-  iconKey: string;
-  label: string;
-}
-
-const QuickFactCard = React.memo<QuickFactCardProps>(({ iconKey, label }) => {
-  const IconComp = ICON_MAP[iconKey] || Star;
-  return (
-    <div className="bg-white p-5 rounded-[20px] border border-primary-navy/5 shadow-sm">
-      <IconComp className="text-secondary-gold mb-2" size={20} />
-      <p className="font-headline text-sm font-bold">{label}</p>
-    </div>
-  );
-});
-QuickFactCard.displayName = 'QuickFactCard';
 
 interface FooterProps {
   chaletName: string;
@@ -233,24 +219,20 @@ export const Sanctuary: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className="px-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white p-5 rounded-[20px] border border-primary-navy/5 space-y-3">
-              <div className="h-5 w-5 bg-primary-navy/5 rounded" />
-              <div className="h-3.5 bg-primary-navy/5 rounded w-20" />
-            </div>
-          ))}
-        </div>
         <div className="px-6 space-y-3">
           <div className="h-6 bg-primary-navy/5 rounded w-48" />
           <div className="h-4 bg-primary-navy/5 rounded w-full" />
           <div className="h-4 bg-primary-navy/5 rounded w-3/4" />
         </div>
-        <div className="px-6 grid grid-cols-2 gap-y-4">
+        <div className="px-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="h-4 w-4 bg-primary-navy/5 rounded-full" />
-              <div className="h-3 bg-primary-navy/5 rounded w-24" />
+            <div key={i} className="h-full bg-white p-6 rounded-2xl border border-primary-navy/5 shadow-sm space-y-4">
+              <div className="h-5 bg-primary-navy/5 rounded w-24" />
+              <div className="space-y-2.5">
+                <div className="h-4 bg-primary-navy/5 rounded w-full" />
+                <div className="h-4 bg-primary-navy/5 rounded w-3/4" />
+                <div className="h-4 bg-primary-navy/5 rounded w-5/6" />
+              </div>
             </div>
           ))}
         </div>
@@ -291,33 +273,6 @@ export const Sanctuary: React.FC = () => {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="px-6">
-        {data.quickFacts && data.quickFacts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {data.quickFacts.map((fact, i) => {
-              const displayLabel = lang === 'ar' && fact.label_ar ? fact.label_ar : fact.label;
-              return (
-                <QuickFactCard key={i} iconKey={fact.icon} label={displayLabel} />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-5 rounded-[20px] border border-primary-navy/5 shadow-sm">
-              <Users className="text-secondary-gold mb-2" size={20} />
-              <p className="text-[10px] text-primary-navy/50 font-bold uppercase tracking-wider mb-1">{t('sanctuary.capacity')}</p>
-              <p className="font-headline text-lg font-bold">{data.capacity} {t('common.guests')}</p>
-            </div>
-            <div className="bg-white p-5 rounded-[20px] border border-primary-navy/5 shadow-sm">
-              <Ruler className="text-secondary-gold mb-2" size={20} />
-              <p className="text-[10px] text-primary-navy/50 font-bold uppercase tracking-wider mb-1">{t('sanctuary.area')}</p>
-              <p className="font-headline text-lg font-bold">{data.area_sqm} m&sup2;</p>
-            </div>
-          </div>
-        )}
-      </section>
-
       {/* Description */}
       <section className="px-6">
         <h3 className="font-headline text-xl font-bold mb-4">{bl(data.headline, lang)}</h3>
@@ -325,19 +280,45 @@ export const Sanctuary: React.FC = () => {
         <div className="mt-4 text-sm text-primary-navy/60">
           <span className="font-bold text-secondary-gold">{t('sanctuary.from')} {getMinPrice(data.pricing, data.nightly_rate)} {t('common.omr')}</span> {t('common.perNight')}
         </div>
-        {data.features.length > 0 && (
-          <div className="mt-8 grid grid-cols-2 gap-y-4">
-            {data.features.map((item, idx) => (
-              <div key={item} className="flex items-center gap-3">
-                <CheckCircle2 className="text-secondary-gold" size={16} />
-                <span className="text-xs font-bold text-primary-navy/80">
-                  {lang === 'ar' && data.features_ar?.[idx] ? data.features_ar[idx] : item}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
+
+      {/* Resort Guide — Categorized Feature Tiles */}
+      {data.featureSections && data.featureSections.length > 0 && (
+        <section className="px-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+            {data.featureSections.map((section, i) => {
+              const title = lang === 'ar' ? (section.titleAr || section.titleEn) : (section.titleEn || section.titleAr);
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  className="h-full bg-white p-6 rounded-2xl border border-primary-navy/5 shadow-sm"
+                >
+                  <h4 className="font-headline text-lg font-bold text-secondary-gold mb-4">
+                    {title}
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {section.items.map((item, j) => {
+                      const label = lang === 'ar' ? (item.ar || item.en) : (item.en || item.ar);
+                      return (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check size={14} strokeWidth={2.5} className="text-secondary-gold shrink-0 mt-[5px]" />
+                          <span className="text-base font-medium text-primary-navy/85 leading-relaxed">
+                            {label}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Footer Info */}
       <Footer
