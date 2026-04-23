@@ -389,6 +389,30 @@
   color: #9ca3af;
   letter-spacing: 0.5px;
 }
+.printable-invoice .pi-footer-location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #011F36;
+  text-decoration: none;
+  letter-spacing: 0.4px;
+}
+.printable-invoice .pi-footer-location-icon {
+  color: #D4AF37;
+  flex: none;
+}
+.printable-invoice .pi-footer-location-sep {
+  color: #D4AF37;
+  font-weight: 700;
+}
+.printable-invoice .pi-footer-location-ar,
+.printable-invoice .pi-footer-location-en {
+  display: inline-block;
+}
 
 /* Terms of Stay — page 2 */
 .printable-invoice .pi-terms {

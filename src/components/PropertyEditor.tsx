@@ -121,9 +121,11 @@ const PropertyEditorComponent: React.FC = () => {
   const [newLabel, setNewLabel] = useState('');
   const [newItemInputs, setNewItemInputs] = useState<Record<number, { en: string; ar: string }>>({});
 
-  // Special date form
+  // Special date form — two price points so a single date can price Day Use
+  // and Overnight stays independently (same pattern as check-in / check-out).
   const [specialDate, setSpecialDate] = useState('');
-  const [specialPrice, setSpecialPrice] = useState('');
+  const [specialDayUsePrice, setSpecialDayUsePrice] = useState('');
+  const [specialNightPrice, setSpecialNightPrice] = useState('');
 
   // Day-use slot form
   const [newSlotName, setNewSlotName] = useState('');
@@ -281,12 +283,20 @@ const PropertyEditorComponent: React.FC = () => {
   };
 
   const addSpecialDate = () => {
-    if (!specialDate || !specialPrice) return;
-    const price = parseFloat(specialPrice);
-    if (isNaN(price) || price <= 0) return;
-    setPricing({ special_dates: [...form.pricing.special_dates.filter(s => s.date !== specialDate), { date: specialDate, price }] });
+    if (!specialDate || !specialDayUsePrice || !specialNightPrice) return;
+    const dayUse = parseFloat(specialDayUsePrice);
+    const night = parseFloat(specialNightPrice);
+    if (isNaN(dayUse) || dayUse <= 0) return;
+    if (isNaN(night) || night <= 0) return;
+    setPricing({
+      special_dates: [
+        ...form.pricing.special_dates.filter(s => s.date !== specialDate),
+        { date: specialDate, day_use_price: dayUse, night_stay_price: night },
+      ],
+    });
     setSpecialDate('');
-    setSpecialPrice('');
+    setSpecialDayUsePrice('');
+    setSpecialNightPrice('');
   };
 
   const removeSpecialDate = (date: string) =>
@@ -547,19 +557,29 @@ const PropertyEditorComponent: React.FC = () => {
           <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Holiday / Special Date Overrides</h3>
         </div>
 
+        <p className="text-[10px] text-primary-navy/40 font-medium">
+          Set two prices per date — the system picks the matching one based on the guest's stay type
+          (Day Use or Overnight), mirroring the check-in / check-out pricing logic.
+        </p>
+
         {form.pricing.special_dates.length > 0 && (
           <div className="space-y-2">
             {form.pricing.special_dates
               .sort((a, b) => a.date.localeCompare(b.date))
               .map(s => (
-              <div key={s.date} className="flex items-center justify-between bg-pearl-white rounded-xl px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-primary-navy">
-                    {new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-secondary-gold font-headline">{s.price} OMR</span>
+              <div key={s.date} className="flex items-center justify-between bg-pearl-white rounded-xl px-4 py-3 gap-3">
+                <span className="text-xs font-bold text-primary-navy min-w-[120px]">
+                  {new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                <div className="flex items-center gap-4 flex-1 justify-end">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Day Use</span>
+                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.day_use_price} OMR</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Night Stay</span>
+                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.night_stay_price} OMR</span>
+                  </div>
                   <button onClick={() => removeSpecialDate(s.date)} className="text-primary-navy/20 hover:text-red-500 transition-colors">
                     <X size={14} />
                   </button>
@@ -569,18 +589,40 @@ const PropertyEditorComponent: React.FC = () => {
           </div>
         )}
 
-        <div className="flex gap-2 items-end">
-          <div className="flex-1 space-y-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Date</label>
             <input type="date" value={specialDate} onChange={(e) => setSpecialDate(e.target.value)} className={inputClass} />
           </div>
-          <div className="w-32 space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Price (OMR)</label>
-            <input type="number" value={specialPrice} onChange={(e) => setSpecialPrice(e.target.value)} placeholder="250" className={inputClass} />
+          <div className="w-full sm:w-40 space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">
+              Day Use Price (OMR)
+              <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">سعر الاستخدام اليومي</span>
+            </label>
+            <input
+              type="number"
+              value={specialDayUsePrice}
+              onChange={(e) => setSpecialDayUsePrice(e.target.value)}
+              placeholder="150"
+              className={inputClass}
+            />
+          </div>
+          <div className="w-full sm:w-40 space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">
+              Night Stay Price (OMR)
+              <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">سعر المبيت</span>
+            </label>
+            <input
+              type="number"
+              value={specialNightPrice}
+              onChange={(e) => setSpecialNightPrice(e.target.value)}
+              placeholder="250"
+              className={inputClass}
+            />
           </div>
           <button
             onClick={addSpecialDate}
-            disabled={!specialDate || !specialPrice}
+            disabled={!specialDate || !specialDayUsePrice || !specialNightPrice}
             className="px-4 py-3 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30"
           >
             <Plus size={16} />

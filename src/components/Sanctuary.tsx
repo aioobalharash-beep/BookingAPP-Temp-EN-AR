@@ -31,7 +31,7 @@ interface PricingSettings {
   weekday_rate?: number;
   event_rate?: number;
   day_use_slots?: DayUseSlotRates[];
-  special_dates?: { date: string; price: number }[];
+  special_dates?: { date: string; day_use_price?: number; night_stay_price?: number; price?: number }[];
   discount?: { enabled: boolean; type: 'percent' | 'flat'; value: number; start_date: string; end_date: string };
 }
 
@@ -47,7 +47,7 @@ const getMinPrice = (pricing: PricingSettings | undefined, fallback: number): nu
     slot.sunday_rate, slot.monday_rate, slot.tuesday_rate,
     slot.wednesday_rate, slot.thursday_rate, slot.friday_rate, slot.saturday_rate,
   ]);
-  const specialPrices = (pricing.special_dates || []).map(s => s.price);
+  const specialPrices = (pricing.special_dates || []).flatMap(s => [s.day_use_price, s.night_stay_price, s.price]);
   const allRates = [
     ...nightRates,
     pricing.day_use_rate,

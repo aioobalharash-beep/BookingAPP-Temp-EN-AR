@@ -25,7 +25,19 @@ export interface PricingSettings {
   event_category_name?: string; // Admin-editable label for the Event option (e.g. "Private Function")
   event_rate?: number;          // Per-night price used when stay_type = 'event'
   security_deposit: number;     // Refundable — excluded from revenue/tax
-  special_dates: { date: string; price: number }[];  // YYYY-MM-DD
+  /**
+   * Holiday / special-date overrides. Each entry has two prices so the engine
+   * can match the same date to either a Day Use booking or an overnight stay.
+   * `price` is kept for backward-compatibility with older Firestore records and
+   * is used as a fallback when the two split fields are missing.
+   */
+  special_dates: {
+    date: string;              // YYYY-MM-DD
+    day_use_price: number;     // سعر الاستخدام اليومي
+    night_stay_price: number;  // سعر المبيت
+    /** @deprecated legacy single-price field — migrated into the two above */
+    price?: number;
+  }[];
   discount?: {
     enabled: boolean;
     type: 'percent' | 'flat';
@@ -124,6 +136,20 @@ export function getAllRates(pricing: PricingSettings): number[] {
   ];
 }
 
+/**
+ * Resolve the special-date price for a given stay type, falling back to
+ * the legacy single `price` field when the split fields aren't populated.
+ */
+function getSpecialPrice(
+  entry: { day_use_price?: number; night_stay_price?: number; price?: number },
+  isDayUse: boolean
+): number | undefined {
+  const key = isDayUse ? entry.day_use_price : entry.night_stay_price;
+  if (typeof key === 'number') return key;
+  if (typeof entry.price === 'number') return entry.price;
+  return undefined;
+}
+
 export function calculateTotalPrice(
   checkIn: string,
   checkOut: string,
@@ -132,7 +158,7 @@ export function calculateTotalPrice(
 ): PriceBreakdown {
   const start = parseLocalDate(checkIn);
   const end = parseLocalDate(checkOut);
-  const specialMap = new Map(pricing.special_dates.map(s => [s.date, s.price]));
+  const specialMap = new Map(pricing.special_dates.map(s => [s.date, s]));
 
   // Day Use: check-in === check-out
   const isDayUse = checkIn === checkOut;
@@ -146,8 +172,10 @@ export function calculateTotalPrice(
       const slot = pricing.day_use_slots.find(s => s.id === slotId);
       if (slot) {
         let rate = getSlotRateForDay(dow, slot);
-        const isSpecial = specialMap.has(dateStr);
-        if (isSpecial) rate = specialMap.get(dateStr)!;
+        const specialEntry = specialMap.get(dateStr);
+        const specialPrice = specialEntry && getSpecialPrice(specialEntry, true);
+        const isSpecial = specialPrice !== undefined;
+        if (isSpecial) rate = specialPrice!;
 
         let discountAmount = 0;
         if (pricing.discount?.enabled && pricing.discount.start_date && pricing.discount.end_date) {
@@ -176,8 +204,10 @@ export function calculateTotalPrice(
 
     // Fallback: flat day_use_rate
     let rate = pricing.day_use_rate || 0;
-    const isSpecial = specialMap.has(dateStr);
-    if (isSpecial) rate = specialMap.get(dateStr)!;
+    const specialEntry = specialMap.get(dateStr);
+    const specialPrice = specialEntry && getSpecialPrice(specialEntry, true);
+    const isSpecial = specialPrice !== undefined;
+    if (isSpecial) rate = specialPrice!;
 
     let discountAmount = 0;
     if (pricing.discount?.enabled && pricing.discount.start_date && pricing.discount.end_date) {
@@ -213,8 +243,10 @@ export function calculateTotalPrice(
     let rate: number;
     let isSpecial = false;
 
-    if (specialMap.has(dateStr)) {
-      rate = specialMap.get(dateStr)!;
+    const specialEntry = specialMap.get(dateStr);
+    const specialPrice = specialEntry && getSpecialPrice(specialEntry, false);
+    if (specialPrice !== undefined) {
+      rate = specialPrice;
       isSpecial = true;
     } else {
       rate = getRateForDay(dow, pricing);
@@ -340,10 +372,26 @@ export function getNightStayTimes(checkOutDate: Date, lang = 'en'): StayTimes {
   };
 }
 
+/** Normalise special-date entries to the new {day_use_price, night_stay_price} shape. */
+function migrateSpecialDates(raw: any): PricingSettings['special_dates'] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((s: any) => {
+      if (!s || typeof s.date !== 'string') return null;
+      const legacy = typeof s.price === 'number' ? s.price : 0;
+      const dayUse = typeof s.day_use_price === 'number' ? s.day_use_price : legacy;
+      const night = typeof s.night_stay_price === 'number' ? s.night_stay_price : legacy;
+      return { date: s.date, day_use_price: dayUse, night_stay_price: night };
+    })
+    .filter((s): s is { date: string; day_use_price: number; night_stay_price: number } => !!s);
+}
+
 /** Migrate legacy 4-rate pricing to 7-day format */
 export function migratePricing(raw: any): PricingSettings {
-  // If already has sunday_rate, it's the new format
-  if (raw.sunday_rate !== undefined) return raw as PricingSettings;
+  // If already has sunday_rate, it's the new format (but still normalise special_dates).
+  if (raw.sunday_rate !== undefined) {
+    return { ...raw, special_dates: migrateSpecialDates(raw.special_dates) } as PricingSettings;
+  }
 
   // Migrate from legacy weekday_rate / thursday / friday / saturday
   const weekday = raw.weekday_rate || 120;
@@ -359,7 +407,7 @@ export function migratePricing(raw: any): PricingSettings {
     event_category_name: raw.event_category_name || '',
     event_rate: raw.event_rate ?? Math.round(weekday * 2),
     security_deposit: raw.security_deposit || 50,
-    special_dates: raw.special_dates || [],
+    special_dates: migrateSpecialDates(raw.special_dates),
     day_use_slots: raw.day_use_slots || [],
     discount: raw.discount,
   };
