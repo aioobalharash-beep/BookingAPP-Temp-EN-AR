@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Receipt, Download, MessageCircle, X, Calendar, Building2, Edit3, Paperclip, IdCard, AlertCircle, Home } from 'lucide-react';
+import { FileText, Receipt, Download, MessageCircle, X, Calendar, Building2, Edit3, Paperclip, IdCard, AlertCircle, Home, Printer } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, limit } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { downloadInvoicePDF } from '../services/pdf';
 import { generateVATReportPDF } from '../services/vatReport';
 import type { Invoice } from '../types';
 import { useTranslation } from 'react-i18next';
 import { getClientConfig, whatsappHref } from '../config/clientConfig';
 import { BrandMark } from './BrandMark';
+import { PrintableInvoice } from './PrintableInvoice';
 
 interface RealtimeBooking {
   id: string;
@@ -223,6 +223,10 @@ export const Invoices: React.FC = () => {
   const closeModal = () => {
     setSelectedInvoice(null);
     setSelectedBooking(null);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const nonCancelledBookings = bookings.filter(b => b.status !== 'cancelled');
@@ -561,6 +565,19 @@ export const Invoices: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Print-only invoice — rendered off-screen, visible only in window.print() */}
+      {selectedInvoice && (
+        <PrintableInvoice
+          invoice={selectedInvoice}
+          lang={i18n.language}
+          chaletName={config.chaletName}
+          licenseNumber={licenseNumber}
+          adminName={config.admin.name}
+          balanceDue={Number(selectedBooking?.balance_due) || Number(selectedBooking?.depositAmount) || Number(selectedBooking?.security_deposit) || 0}
+          depositUnpaid={selectedBooking?.deposit_paid === false}
+        />
+      )}
+
       {/* Invoice Preview Modal — only opens when a specific invoice is selected */}
       <AnimatePresence>
         {selectedInvoice && (
@@ -721,11 +738,11 @@ export const Invoices: React.FC = () => {
               <div className="p-5 bg-surface-container-low space-y-3 border-t border-primary-navy/5">
                 <div className="flex gap-3">
                   <button
-                    onClick={async () => downloadInvoicePDF({ ...selectedInvoice, licenseNumber, chaletName: config.chaletName, adminName: config.admin.name }, i18n.language)}
+                    onClick={handlePrint}
                     className="flex-1 border border-primary-navy/20 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-primary-navy hover:bg-white transition-colors flex items-center justify-center gap-2"
                   >
-                    <Download size={14} />
-                    Download PDF
+                    <Printer size={14} />
+                    {i18n.language === 'ar' ? 'طباعة / حفظ PDF' : 'Print / Save as PDF'}
                   </button>
                   {selectedBooking && (
                     <button
