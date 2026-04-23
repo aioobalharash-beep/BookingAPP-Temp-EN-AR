@@ -132,7 +132,41 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
     termsIntro: isAr
       ? 'يُرجى مراجعة الشروط التالية المتعلقة بإقامتكم في شاليه الملاك.'
       : 'Please review the following terms regarding your stay at Al Malak Chalet.',
+    locationAr: 'الموقع',
+    locationEn: 'Location',
   };
+
+  const locationUrl = 'https://maps.app.goo.gl/Zz9uFgWiYWyBEUnVA';
+  const LocationPin = () => (
+    <svg
+      className="pi-footer-location-icon"
+      viewBox="0 0 24 24"
+      width="11"
+      height="11"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+  const FooterLocation = () => (
+    <a
+      className="pi-footer-location"
+      href={locationUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <LocationPin />
+      <span className="pi-footer-location-ar" dir="rtl" lang="ar">{t.locationAr}</span>
+      <span className="pi-footer-location-sep" aria-hidden="true">•</span>
+      <span className="pi-footer-location-en" dir="ltr" lang="en">{t.locationEn}</span>
+    </a>
+  );
 
   const fmt = (n: number) =>
     n.toLocaleString(isAr ? 'ar-OM' : 'en-US', {
@@ -271,6 +305,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
         <footer className="pi-footer">
           <div className="pi-footer-rule" />
           <div className="pi-footer-text">{t.footer}</div>
+          <FooterLocation />
         </footer>
 
         {/* Terms of Stay — always starts on its own page */}
@@ -293,6 +328,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
 
           <div className="pi-footer-rule" />
           <div className="pi-footer-text">{t.footer}</div>
+          <FooterLocation />
         </section>
       </div>
     </div>

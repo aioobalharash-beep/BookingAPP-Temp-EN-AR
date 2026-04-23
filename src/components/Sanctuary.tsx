@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Calendar as CalendarIcon, Instagram, MessageCircle, Check } from 'lucide-react';
+import { Calendar as CalendarIcon, Instagram, MessageCircle, MapPin, Check } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -31,7 +31,7 @@ interface PricingSettings {
   weekday_rate?: number;
   event_rate?: number;
   day_use_slots?: DayUseSlotRates[];
-  special_dates?: { date: string; price: number }[];
+  special_dates?: { date: string; day_use_price?: number; night_stay_price?: number; price?: number }[];
   discount?: { enabled: boolean; type: 'percent' | 'flat'; value: number; start_date: string; end_date: string };
 }
 
@@ -47,7 +47,7 @@ const getMinPrice = (pricing: PricingSettings | undefined, fallback: number): nu
     slot.sunday_rate, slot.monday_rate, slot.tuesday_rate,
     slot.wednesday_rate, slot.thursday_rate, slot.friday_rate, slot.saturday_rate,
   ]);
-  const specialPrices = (pricing.special_dates || []).map(s => s.price);
+  const specialPrices = (pricing.special_dates || []).flatMap(s => [s.day_use_price, s.night_stay_price, s.price]);
   const allRates = [
     ...nightRates,
     pricing.day_use_rate,
@@ -168,6 +168,20 @@ const Footer = React.memo<FooterProps>(({ chaletName, footerText, whatsappNumber
         >
           <Instagram size={20} />
           <span className="text-xs font-bold">Instagram</span>
+        </a>
+        <a
+          href="https://maps.app.goo.gl/Zz9uFgWiYWyBEUnVA"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Location"
+          className="flex items-center gap-2 text-primary-navy/60 hover:text-secondary-gold transition-colors"
+        >
+          <MapPin size={20} />
+          <span className="text-xs font-bold">
+            <span dir="rtl" lang="ar">الموقع</span>
+            <span className="mx-1 text-secondary-gold/70" aria-hidden="true">|</span>
+            <span dir="ltr" lang="en">Location</span>
+          </span>
         </a>
       </div>
       {footerText && (
