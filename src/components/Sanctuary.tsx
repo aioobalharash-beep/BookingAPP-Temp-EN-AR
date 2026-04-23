@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Calendar as CalendarIcon, Instagram, MessageCircle, Check } from 'lucide-react';
+import { Calendar as CalendarIcon, Instagram, MessageCircle, MapPin, Check } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -168,6 +168,20 @@ const Footer = React.memo<FooterProps>(({ chaletName, footerText, whatsappNumber
         >
           <Instagram size={20} />
           <span className="text-xs font-bold">Instagram</span>
+        </a>
+        <a
+          href="https://maps.app.goo.gl/Zz9uFgWiYWyBEUnVA"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Location"
+          className="flex items-center gap-2 text-primary-navy/60 hover:text-secondary-gold transition-colors"
+        >
+          <MapPin size={20} />
+          <span className="text-xs font-bold">
+            <span dir="rtl" lang="ar">الموقع</span>
+            <span className="mx-1 text-secondary-gold/70" aria-hidden="true">|</span>
+            <span dir="ltr" lang="en">Location</span>
+          </span>
         </a>
       </div>
       {footerText && (
