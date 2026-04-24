@@ -201,7 +201,7 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
               type="text"
               value={form.name}
               onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-              placeholder="e.g. Ahmed Al-Said"
+              placeholder={t('guests.placeholderName')}
               className={cn(
                 "w-full bg-surface-container-low border rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20",
                 errors.name ? "border-red-300" : "border-transparent"
@@ -282,13 +282,13 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
 
           {/* Guest ID upload */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-              Attach Guest ID (Card/Passport)
+            <label className="block text-start text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+              {t('guests.attachGuestId')}
             </label>
             <label className="flex items-center gap-3 bg-surface-container-low border border-transparent rounded-xl py-3 px-4 cursor-pointer hover:border-secondary-gold/40 transition-colors">
               <IdCard size={16} className="text-primary-navy/50 flex-shrink-0" />
-              <span className="text-sm text-primary-navy/60 truncate flex-1">
-                {idFileName || 'Upload ID (image or PDF)'}
+              <span className="text-sm text-primary-navy/60 truncate flex-1 text-start">
+                {idFileName || t('guests.uploadIdFile')}
               </span>
               {idProgress !== null && (
                 <span className="text-[10px] font-bold text-secondary-gold">{idProgress}%</span>
@@ -402,8 +402,8 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
 
           {/* Deposit Block */}
           <div className="space-y-3 pt-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-              Deposit Paid?
+            <label className="block text-start text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+              {t('guests.depositPaidQuestion')}
             </label>
             <div className="grid grid-cols-2 gap-2 bg-surface-container-low rounded-xl p-1">
               <button
@@ -417,7 +417,7 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
                 )}
               >
                 <Check size={13} />
-                Yes
+                {t('guests.yes')}
               </button>
               <button
                 type="button"
@@ -425,17 +425,17 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
                 className={cn(
                   "flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98]",
                   depositPaid === 'no'
-                    ? "bg-red-500 text-white shadow-sm"
+                    ? "bg-secondary-gold text-primary-navy shadow-sm"
                     : "text-primary-navy/50 hover:text-primary-navy/70"
                 )}
               >
-                No
+                {t('guests.no')}
               </button>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-                Deposit Amount *
+              <label className="block text-start text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+                {t('guests.depositAmount')} *
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -459,8 +459,11 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
             {depositPaid === 'no' && parseFloat(depositAmount) > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
                 <AlertCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-                <p className="text-[11px] text-red-700 font-bold leading-relaxed">
-                  Deposit Due on Arrival — {parseFloat(depositAmount).toFixed(2)} {t('common.omr')} will be collected at check-in.
+                <p className="text-[11px] text-red-700 font-bold leading-relaxed text-start">
+                  {t('guests.depositDueOnArrivalMsg', {
+                    amount: parseFloat(depositAmount).toFixed(2),
+                    currency: t('common.omr'),
+                  })}
                 </p>
               </div>
             )}
