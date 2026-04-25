@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from './OptimizedImage';
-import { ArrowLeft, Upload, X, Plus, Save, Check, Calendar, Tag, Percent, Landmark, Sun, Clock, FileText, Languages, Trash2, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, X, Plus, Save, Check, Calendar, Tag, Percent, Landmark, Sun, Clock, FileText, Languages, Trash2, LayoutGrid } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { uploadToCloudinary as uploadImageToCloudinary } from '../services/cloudinary';
 import { migratePricing, formatTime, type PricingSettings, type DayUseSlot } from '../services/pricingUtils';
 import { type BilingualField, toBilingual } from '../utils/bilingual';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface GalleryImage { url: string; label: string; }
 
@@ -108,10 +110,15 @@ const DEFAULT_DATA: PropertyDetails = {
   termsAr: '',
 };
 
-const inputClass = "w-full bg-pearl-white border border-primary-navy/10 rounded-xl py-3 px-4 text-sm font-medium focus:ring-1 focus:ring-secondary-gold/50 outline-none";
+const baseInputClass = "w-full bg-pearl-white border border-primary-navy/10 rounded-xl py-3 px-4 text-sm font-medium focus:ring-1 focus:ring-secondary-gold/50 outline-none";
 
 const PropertyEditorComponent: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { isRTL } = useLanguage();
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const textAlignClass = isRTL ? 'text-right' : 'text-left';
+  const inputClass = cn(baseInputClass, textAlignClass);
   const [form, setForm] = useState<PropertyDetails>(DEFAULT_DATA);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -326,19 +333,19 @@ const PropertyEditorComponent: React.FC = () => {
   if (loading) return <div className="p-8 animate-pulse"><div className="h-96 bg-primary-navy/5 rounded-xl" /></div>;
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-4xl mx-auto">
+    <div dir={dir} className={cn("p-6 md:p-8 space-y-8 max-w-4xl mx-auto", textAlignClass)}>
       {/* Header */}
       <div>
         <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-primary-navy/50 hover:text-primary-navy transition-colors text-xs font-bold uppercase tracking-wider mb-3">
-          <ArrowLeft size={14} /> Back to Dashboard
+          {isRTL ? <ArrowRight size={14} /> : <ArrowLeft size={14} />} {t('propertyEditor.backToDashboard')}
         </button>
-        <span className="text-secondary-gold font-bold tracking-widest text-[10px] uppercase">Property Management</span>
-        <h1 className="font-headline text-2xl font-bold text-primary-navy mt-1">Edit Property</h1>
+        <span className="text-secondary-gold font-bold tracking-widest text-[10px] uppercase">{t('propertyEditor.propertyManagement')}</span>
+        <h1 className="font-headline text-2xl font-bold text-primary-navy mt-1">{t('propertyEditor.editProperty')}</h1>
       </div>
 
       {/* Media Gallery */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-4">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Media Gallery</h3>
+        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.mediaGallery')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {form.gallery.map((img, i) => (
             <div key={i} className="relative group aspect-[4/5] rounded-xl overflow-hidden bg-primary-navy/5">
@@ -362,39 +369,39 @@ const PropertyEditorComponent: React.FC = () => {
             ) : (
               <>
                 <Upload size={20} className="text-primary-navy/25" />
-                <span className="text-[10px] font-bold text-primary-navy/30 uppercase tracking-wider">Add Image</span>
+                <span className="text-[10px] font-bold text-primary-navy/30 uppercase tracking-wider">{t('propertyEditor.addImage')}</span>
               </>
             )}
             <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
           </label>
         </div>
         <div className="flex gap-2">
-          <input type="text" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Label for next upload (optional)" className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
+          <input type="text" dir={dir} value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder={t('propertyEditor.labelForUpload')} className={cn("flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)} />
         </div>
       </section>
 
       {/* Property Details */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Property Details</h3>
+        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.propertyDetails')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Property Name</label>
-            <input type="text" value={form.name.en} onChange={(e) => setForm(prev => ({ ...prev, name: { ...prev.name, en: e.target.value } }))} className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.propertyName')}</label>
+            <input type="text" dir={dir} value={form.name.en} onChange={(e) => setForm(prev => ({ ...prev, name: { ...prev.name, en: e.target.value } }))} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Capacity (Guests)</label>
-            <input type="number" value={form.capacity} onChange={(e) => setForm(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))} className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.capacityGuests')}</label>
+            <input type="number" dir={dir} value={form.capacity} onChange={(e) => setForm(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Area (m²)</label>
-            <input type="number" value={form.area_sqm} onChange={(e) => setForm(prev => ({ ...prev, area_sqm: parseInt(e.target.value) || 0 }))} className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.areaM2')}</label>
+            <input type="number" dir={dir} value={form.area_sqm} onChange={(e) => setForm(prev => ({ ...prev, area_sqm: parseInt(e.target.value) || 0 }))} className={inputClass} />
           </div>
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Property Name (Arabic)
+            <Languages size={12} /> {t('propertyEditor.propertyNameAr')}
           </label>
-          <input type="text" dir="rtl" value={form.name.ar} onChange={(e) => setForm(prev => ({ ...prev, name: { ...prev.name, ar: e.target.value } }))} placeholder="e.g. شاليه الملاك" className={inputClass} />
+          <input type="text" dir="rtl" value={form.name.ar} onChange={(e) => setForm(prev => ({ ...prev, name: { ...prev.name, ar: e.target.value } }))} placeholder={t('propertyEditor.propertyNameArPlaceholder')} className={cn(baseInputClass, "text-right")} />
         </div>
       </section>
 
@@ -402,26 +409,26 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <Tag size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Dynamic Pricing</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.dynamicPricing')}</h3>
         </div>
 
         <p className="text-[10px] text-primary-navy/40 font-medium mb-1">
-          Set the nightly rate for each day of the week. Each night is charged based on the check-in day.
+          {t('propertyEditor.dynamicPricingHint')}
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {([
-            ['sunday_rate', 'Sun'],
-            ['monday_rate', 'Mon'],
-            ['tuesday_rate', 'Tue'],
-            ['wednesday_rate', 'Wed'],
-            ['thursday_rate', 'Thu'],
-            ['friday_rate', 'Fri'],
-            ['saturday_rate', 'Sat'],
+            ['sunday_rate', t('propertyEditor.daySun')],
+            ['monday_rate', t('propertyEditor.dayMon')],
+            ['tuesday_rate', t('propertyEditor.dayTue')],
+            ['wednesday_rate', t('propertyEditor.dayWed')],
+            ['thursday_rate', t('propertyEditor.dayThu')],
+            ['friday_rate', t('propertyEditor.dayFri')],
+            ['saturday_rate', t('propertyEditor.daySat')],
           ] as [keyof PricingSettings, string][]).map(([key, label]) => (
             <div key={key} className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{label} (OMR)</label>
-              <input type="number" value={form.pricing[key] as number} onChange={(e) => setPricing({ [key]: parseInt(e.target.value) || 0 })} className={inputClass} />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{label} {t('propertyEditor.rateOmrSuffix')}</label>
+              <input type="number" dir={dir} value={form.pricing[key] as number} onChange={(e) => setPricing({ [key]: parseInt(e.target.value) || 0 })} className={inputClass} />
             </div>
           ))}
         </div>
@@ -430,26 +437,28 @@ const PropertyEditorComponent: React.FC = () => {
         <div className="pt-4 border-t border-primary-navy/5">
           <div className="flex items-center gap-2 mb-3">
             <Tag size={14} className="text-secondary-gold" />
-            <h4 className="text-xs font-bold text-primary-navy uppercase tracking-wide">Event Booking</h4>
+            <h4 className="text-xs font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.eventBooking')}</h4>
           </div>
           <p className="text-[10px] text-primary-navy/40 font-medium mb-3">
-            Guests can select "Event" on the booking form. The total is calculated as nights × the price below.
+            {t('propertyEditor.eventBookingHint')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Event Category Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.eventCategoryName')}</label>
               <input
                 type="text"
+                dir={dir}
                 value={form.pricing.event_category_name || ''}
                 onChange={(e) => setPricing({ event_category_name: e.target.value })}
-                placeholder="e.g. Private Function"
+                placeholder={t('propertyEditor.eventCategoryPlaceholder')}
                 className={inputClass}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Event Price per Night (OMR)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.eventPricePerNight')}</label>
               <input
                 type="number"
+                dir={dir}
                 value={form.pricing.event_rate ?? 0}
                 onChange={(e) => setPricing({ event_rate: parseInt(e.target.value) || 0 })}
                 className={inputClass}
@@ -462,9 +471,9 @@ const PropertyEditorComponent: React.FC = () => {
         <div className="pt-4 border-t border-primary-navy/5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Security Deposit — Refundable (OMR)</label>
-              <input type="number" value={form.pricing.security_deposit} onChange={(e) => setPricing({ security_deposit: parseInt(e.target.value) || 0 })} className={inputClass} />
-              <p className="text-[10px] text-primary-navy/40 font-medium">Collected at booking, refunded after checkout. Excluded from revenue/tax.</p>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.securityDeposit')}</label>
+              <input type="number" dir={dir} value={form.pricing.security_deposit} onChange={(e) => setPricing({ security_deposit: parseInt(e.target.value) || 0 })} className={inputClass} />
+              <p className="text-[10px] text-primary-navy/40 font-medium">{t('propertyEditor.securityDepositHint')}</p>
             </div>
           </div>
         </div>
@@ -474,10 +483,10 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <Clock size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Day-Use Time Slots</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.dayUseTimeSlots')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Define time-limited booking slots for same-day stays. Each slot has its own per-day pricing grid.
+          {t('propertyEditor.dayUseTimeSlotsHint')}
         </p>
 
         {(form.pricing.day_use_slots || []).map(slot => (
@@ -494,8 +503,8 @@ const PropertyEditorComponent: React.FC = () => {
                   dir="rtl"
                   value={slot.name_ar || ''}
                   onChange={(e) => updateSlot(slot.id, { name_ar: e.target.value })}
-                  placeholder="اسم الفترة"
-                  className="w-40 bg-white border border-primary-navy/10 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                  placeholder={t('propertyEditor.slotNameArPlaceholder')}
+                  className="w-40 bg-white border border-primary-navy/10 rounded-lg py-1.5 px-3 text-xs text-right focus:ring-1 focus:ring-secondary-gold/50 outline-none"
                 />
                 <button onClick={() => removeSlot(slot.id)} className="text-primary-navy/20 hover:text-red-500 transition-colors"><X size={16} /></button>
               </div>
@@ -503,9 +512,10 @@ const PropertyEditorComponent: React.FC = () => {
             <div className="grid grid-cols-7 gap-2">
               {(['sunday_rate', 'monday_rate', 'tuesday_rate', 'wednesday_rate', 'thursday_rate', 'friday_rate', 'saturday_rate'] as (keyof DayUseSlot)[]).map((key, i) => (
                 <div key={key} className="space-y-1">
-                  <label className="text-[8px] font-bold uppercase text-primary-navy/30 text-center block">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}</label>
+                  <label className="text-[8px] font-bold uppercase text-primary-navy/30 text-center block">{[t('propertyEditor.daySun'), t('propertyEditor.dayMon'), t('propertyEditor.dayTue'), t('propertyEditor.dayWed'), t('propertyEditor.dayThu'), t('propertyEditor.dayFri'), t('propertyEditor.daySat')][i]}</label>
                   <input
                     type="number"
+                    dir={dir}
                     value={slot[key] as number}
                     onChange={(e) => updateSlot(slot.id, { [key]: parseInt(e.target.value) || 0 })}
                     className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-1 text-xs font-medium text-center focus:ring-1 focus:ring-secondary-gold/50 outline-none"
@@ -517,27 +527,27 @@ const PropertyEditorComponent: React.FC = () => {
         ))}
 
         <div className="border-t border-primary-navy/5 pt-4 space-y-3">
-          <p className="text-[10px] font-bold text-primary-navy/40 uppercase tracking-widest">Add New Slot</p>
+          <p className="text-[10px] font-bold text-primary-navy/40 uppercase tracking-widest">{t('propertyEditor.addNewSlot')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Slot Name</label>
-              <input type="text" value={newSlotName} onChange={(e) => setNewSlotName(e.target.value)} placeholder="e.g. Morning Escape" className={inputClass} />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.slotName')}</label>
+              <input type="text" dir={dir} value={newSlotName} onChange={(e) => setNewSlotName(e.target.value)} placeholder={t('propertyEditor.slotNamePlaceholder')} className={inputClass} />
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40 flex items-center gap-1.5">
-                <Languages size={10} /> Slot Name (Arabic)
+                <Languages size={10} /> {t('propertyEditor.slotNameAr')}
               </label>
-              <input type="text" dir="rtl" value={newSlotNameAr} onChange={(e) => setNewSlotNameAr(e.target.value)} placeholder="e.g. الفترة الصباحية" className={inputClass} />
+              <input type="text" dir="rtl" value={newSlotNameAr} onChange={(e) => setNewSlotNameAr(e.target.value)} placeholder={t('propertyEditor.slotNameArPlaceholder2')} className={cn(baseInputClass, "text-right")} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Start Time</label>
-              <input type="time" value={newSlotStart} onChange={(e) => setNewSlotStart(e.target.value)} className={inputClass} />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.startTime')}</label>
+              <input type="time" dir={dir} value={newSlotStart} onChange={(e) => setNewSlotStart(e.target.value)} className={inputClass} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">End Time</label>
-              <input type="time" value={newSlotEnd} onChange={(e) => setNewSlotEnd(e.target.value)} className={inputClass} />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.endTime')}</label>
+              <input type="time" dir={dir} value={newSlotEnd} onChange={(e) => setNewSlotEnd(e.target.value)} className={inputClass} />
             </div>
           </div>
           <button
@@ -545,7 +555,7 @@ const PropertyEditorComponent: React.FC = () => {
             disabled={!newSlotName.trim() || !newSlotStart || !newSlotEnd}
             className="flex items-center gap-2 px-4 py-2.5 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30 text-xs font-bold"
           >
-            <Plus size={14} /> Add Slot
+            <Plus size={14} /> {t('propertyEditor.addSlot')}
           </button>
         </div>
       </section>
@@ -554,12 +564,11 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Holiday / Special Date Overrides</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.specialDates')}</h3>
         </div>
 
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Set two prices per date — the system picks the matching one based on the guest's stay type
-          (Day Use or Overnight), mirroring the check-in / check-out pricing logic.
+          {t('propertyEditor.specialDatesHint')}
         </p>
 
         {form.pricing.special_dates.length > 0 && (
@@ -569,16 +578,16 @@ const PropertyEditorComponent: React.FC = () => {
               .map(s => (
               <div key={s.date} className="flex items-center justify-between bg-pearl-white rounded-xl px-4 py-3 gap-3">
                 <span className="text-xs font-bold text-primary-navy min-w-[120px]">
-                  {new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {new Date(s.date).toLocaleDateString(isRTL ? 'ar-OM' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
                 <div className="flex items-center gap-4 flex-1 justify-end">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Day Use</span>
-                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.day_use_price} OMR</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.dayUseLabel')}</span>
+                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.day_use_price} {t('common.omr')}</span>
                   </div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Night Stay</span>
-                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.night_stay_price} OMR</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.nightStayLabel')}</span>
+                    <span className="text-sm font-bold text-secondary-gold font-headline">{s.night_stay_price} {t('common.omr')}</span>
                   </div>
                   <button onClick={() => removeSpecialDate(s.date)} className="text-primary-navy/20 hover:text-red-500 transition-colors">
                     <X size={14} />
@@ -591,16 +600,17 @@ const PropertyEditorComponent: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Date</label>
-            <input type="date" value={specialDate} onChange={(e) => setSpecialDate(e.target.value)} className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.date')}</label>
+            <input type="date" dir={dir} value={specialDate} onChange={(e) => setSpecialDate(e.target.value)} className={inputClass} />
           </div>
           <div className="w-full sm:w-40 space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">
-              Day Use Price (OMR)
-              <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">سعر الاستخدام اليومي</span>
+              {t('propertyEditor.dayUsePriceOmr')}
+              {!isRTL && <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">{t('propertyEditor.dayUsePriceArHint')}</span>}
             </label>
             <input
               type="number"
+              dir={dir}
               value={specialDayUsePrice}
               onChange={(e) => setSpecialDayUsePrice(e.target.value)}
               placeholder="150"
@@ -609,11 +619,12 @@ const PropertyEditorComponent: React.FC = () => {
           </div>
           <div className="w-full sm:w-40 space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">
-              Night Stay Price (OMR)
-              <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">سعر المبيت</span>
+              {t('propertyEditor.nightStayPriceOmr')}
+              {!isRTL && <span className="block text-primary-navy/35 font-medium normal-case tracking-normal" dir="rtl" lang="ar">{t('propertyEditor.nightStayPriceArHint')}</span>}
             </label>
             <input
               type="number"
+              dir={dir}
               value={specialNightPrice}
               onChange={(e) => setSpecialNightPrice(e.target.value)}
               placeholder="250"
@@ -635,7 +646,7 @@ const PropertyEditorComponent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Percent size={16} className="text-secondary-gold" />
-            <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Discount Rules</h3>
+            <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.discountRules')}</h3>
           </div>
           <button
             onClick={() => setDiscount({ enabled: !form.pricing.discount?.enabled })}
@@ -655,7 +666,7 @@ const PropertyEditorComponent: React.FC = () => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Type</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.discountType')}</label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setDiscount({ type: 'percent' })}
@@ -664,7 +675,7 @@ const PropertyEditorComponent: React.FC = () => {
                       form.pricing.discount.type === 'percent' ? "bg-primary-navy text-white" : "bg-pearl-white text-primary-navy/50 border border-primary-navy/10"
                     )}
                   >
-                    Percentage (%)
+                    {t('propertyEditor.percentage')}
                   </button>
                   <button
                     onClick={() => setDiscount({ type: 'flat' })}
@@ -673,16 +684,17 @@ const PropertyEditorComponent: React.FC = () => {
                       form.pricing.discount.type === 'flat' ? "bg-primary-navy text-white" : "bg-pearl-white text-primary-navy/50 border border-primary-navy/10"
                     )}
                   >
-                    Flat (OMR)
+                    {t('propertyEditor.flatOmr')}
                   </button>
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">
-                  {form.pricing.discount.type === 'percent' ? 'Discount (%)' : 'Discount (OMR)'}
+                  {form.pricing.discount.type === 'percent' ? t('propertyEditor.discountPercent') : t('propertyEditor.discountOmr')}
                 </label>
                 <input
                   type="number"
+                  dir={dir}
                   value={form.pricing.discount.value}
                   onChange={(e) => setDiscount({ value: parseFloat(e.target.value) || 0 })}
                   className={inputClass}
@@ -691,12 +703,12 @@ const PropertyEditorComponent: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">Start Date</label>
-                <input type="date" value={form.pricing.discount.start_date} onChange={(e) => setDiscount({ start_date: e.target.value })} className={inputClass} />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.startDate')}</label>
+                <input type="date" dir={dir} value={form.pricing.discount.start_date} onChange={(e) => setDiscount({ start_date: e.target.value })} className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">End Date</label>
-                <input type="date" value={form.pricing.discount.end_date} onChange={(e) => setDiscount({ end_date: e.target.value })} className={inputClass} />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.endDate')}</label>
+                <input type="date" dir={dir} value={form.pricing.discount.end_date} onChange={(e) => setDiscount({ end_date: e.target.value })} className={inputClass} />
               </div>
             </div>
           </motion.div>
@@ -707,28 +719,28 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <Landmark size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Bank Transfer Details</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.bankTransferDetails')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          These details are shown to guests who choose bank transfer as their payment method.
+          {t('propertyEditor.bankTransferHint')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Bank Name</label>
-            <input type="text" value={form.bank_name} onChange={(e) => setForm(prev => ({ ...prev, bank_name: e.target.value }))} placeholder="e.g. Bank Muscat" className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.bankName')}</label>
+            <input type="text" dir={dir} value={form.bank_name} onChange={(e) => setForm(prev => ({ ...prev, bank_name: e.target.value }))} placeholder={t('propertyEditor.bankNamePlaceholder')} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Account Name</label>
-            <input type="text" value={form.account_name} onChange={(e) => setForm(prev => ({ ...prev, account_name: e.target.value }))} placeholder="e.g. Al Malak Chalet LLC" className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.accountName')}</label>
+            <input type="text" dir={dir} value={form.account_name} onChange={(e) => setForm(prev => ({ ...prev, account_name: e.target.value }))} placeholder={t('propertyEditor.accountNamePlaceholder')} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">IBAN / Account Number</label>
-            <input type="text" value={form.iban} onChange={(e) => setForm(prev => ({ ...prev, iban: e.target.value }))} placeholder="e.g. OM12 0123 ..." className={inputClass} />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.ibanAccount')}</label>
+            <input type="text" dir={dir} value={form.iban} onChange={(e) => setForm(prev => ({ ...prev, iban: e.target.value }))} placeholder={t('propertyEditor.ibanPlaceholder')} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Phone Number (for Mobile Transfer)</label>
-            <input type="text" value={form.bankPhone} onChange={(e) => setForm(prev => ({ ...prev, bankPhone: e.target.value }))} placeholder="e.g. +968 9000 0000" className={inputClass} />
-            <p className="text-[10px] text-primary-navy/40 font-medium">Shown to guests for WhatsApp/bank app transfers. Leave blank to hide.</p>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.bankPhone')}</label>
+            <input type="text" dir={dir} value={form.bankPhone} onChange={(e) => setForm(prev => ({ ...prev, bankPhone: e.target.value }))} placeholder={t('propertyEditor.bankPhonePlaceholder')} className={inputClass} />
+            <p className="text-[10px] text-primary-navy/40 font-medium">{t('propertyEditor.bankPhoneHint')}</p>
           </div>
         </div>
       </section>
@@ -737,38 +749,39 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">About Us</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.aboutUs')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Long-form story shown on the public About page. Separate paragraphs with a blank line.
+          {t('propertyEditor.aboutHint')}
         </p>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">About (English)</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.aboutEnglish')}</label>
           <textarea
+            dir="ltr"
             value={form.aboutEn}
             onChange={(e) => setForm(prev => ({ ...prev, aboutEn: e.target.value }))}
             rows={8}
-            placeholder={"e.g.\nAl Malak Chalet is a luxury retreat nestled in the heart of Oman...\n\nEvery detail has been curated for the modern traveler..."}
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.aboutPlaceholderEn')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-left")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.aboutEn.length > 0 ? `${form.aboutEn.length} characters` : 'Leave blank to show the default About text.'}
+            {form.aboutEn.length > 0 ? t('propertyEditor.charsCount', { count: form.aboutEn.length }) : t('propertyEditor.aboutEmptyEn')}
           </p>
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> About (Arabic)
+            <Languages size={12} /> {t('propertyEditor.aboutArabic')}
           </label>
           <textarea
             dir="rtl"
             value={form.aboutAr}
             onChange={(e) => setForm(prev => ({ ...prev, aboutAr: e.target.value }))}
             rows={8}
-            placeholder="اكتب نص ‘من نحن’ بالعربية..."
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.aboutPlaceholderAr')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-right")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.aboutAr.length > 0 ? `${form.aboutAr.length} characters` : 'Leave blank to show English version for Arabic users.'}
+            {form.aboutAr.length > 0 ? t('propertyEditor.charsCount', { count: form.aboutAr.length }) : t('propertyEditor.aboutEmptyAr')}
           </p>
         </div>
       </section>
@@ -777,38 +790,39 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Terms of Stay — Public Page</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.termsPublic')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Long-form rules and policies shown on the public /terms page. Use blank lines between rules; line breaks are preserved.
+          {t('propertyEditor.termsPublicHint')}
         </p>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Terms of Stay (English)</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.termsPublicEn')}</label>
           <textarea
+            dir="ltr"
             value={form.termsEn}
             onChange={(e) => setForm(prev => ({ ...prev, termsEn: e.target.value }))}
             rows={12}
-            placeholder={"e.g.\n1. Booking & Payment\nAll reservations require a security deposit at the time of booking...\n\n2. Check-In & Check-Out\nCheck-in is available from 3:00 PM..."}
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.termsPublicPlaceholderEn')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-left")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.termsEn.length > 0 ? `${form.termsEn.length} characters` : 'Leave blank to show the default terms text.'}
+            {form.termsEn.length > 0 ? t('propertyEditor.charsCount', { count: form.termsEn.length }) : t('propertyEditor.termsEmptyEn')}
           </p>
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Terms of Stay (Arabic)
+            <Languages size={12} /> {t('propertyEditor.termsPublicAr')}
           </label>
           <textarea
             dir="rtl"
             value={form.termsAr}
             onChange={(e) => setForm(prev => ({ ...prev, termsAr: e.target.value }))}
             rows={12}
-            placeholder="اكتب شروط الإقامة بالعربية..."
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.termsPublicPlaceholderAr')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-right")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.termsAr.length > 0 ? `${form.termsAr.length} characters` : 'Leave blank to show the English version for Arabic users.'}
+            {form.termsAr.length > 0 ? t('propertyEditor.charsCount', { count: form.termsAr.length }) : t('propertyEditor.termsEmptyAr')}
           </p>
         </div>
       </section>
@@ -817,123 +831,127 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Terms of Stay — Booking Checkout</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.termsCheckout')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Define rules, policies, refund terms, and conditions that guests must accept before booking. This text is displayed in a pop-up during checkout.
+          {t('propertyEditor.termsCheckoutHint')}
         </p>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Terms &amp; Conditions (English)</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.termsCheckoutEn')}</label>
           <textarea
+            dir="ltr"
             value={form.termsOfStay.en}
             onChange={(e) => setForm(prev => ({ ...prev, termsOfStay: { ...prev.termsOfStay, en: e.target.value } }))}
             rows={10}
-            placeholder={"e.g.\n1. Check-in is at 4:00 PM and check-out is at 12:00 PM.\n2. A refundable security deposit of 50 OMR is required.\n3. No smoking is allowed inside the property.\n4. Pets are not permitted.\n5. Cancellation within 48 hours of check-in forfeits the deposit.\n6. Guests are responsible for any damage to the property."}
-            className={cn(inputClass, "leading-relaxed resize-none font-mono text-xs")}
+            placeholder={t('propertyEditor.termsCheckoutPlaceholderEn')}
+            className={cn(baseInputClass, "leading-relaxed resize-none font-mono text-xs text-left")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.termsOfStay.en.length > 0 ? `${form.termsOfStay.en.length} characters` : 'No terms defined yet — guests will not see a terms checkbox during booking.'}
+            {form.termsOfStay.en.length > 0 ? t('propertyEditor.charsCount', { count: form.termsOfStay.en.length }) : t('propertyEditor.termsCheckoutEmptyEn')}
           </p>
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Terms &amp; Conditions (Arabic)
+            <Languages size={12} /> {t('propertyEditor.termsCheckoutAr')}
           </label>
           <textarea
             dir="rtl"
             value={form.termsOfStay.ar}
             onChange={(e) => setForm(prev => ({ ...prev, termsOfStay: { ...prev.termsOfStay, ar: e.target.value } }))}
             rows={10}
-            placeholder="أدخل الشروط والأحكام بالعربية..."
-            className={cn(inputClass, "leading-relaxed resize-none font-mono text-xs")}
+            placeholder={t('propertyEditor.termsCheckoutPlaceholderAr')}
+            className={cn(baseInputClass, "leading-relaxed resize-none font-mono text-xs text-right")}
           />
           <p className="text-[10px] text-primary-navy/40 font-medium">
-            {form.termsOfStay.ar.length > 0 ? `${form.termsOfStay.ar.length} characters` : 'Leave blank to show English version for Arabic users.'}
+            {form.termsOfStay.ar.length > 0 ? t('propertyEditor.charsCount', { count: form.termsOfStay.ar.length }) : t('propertyEditor.termsCheckoutEmptyAr')}
           </p>
         </div>
       </section>
 
       {/* Footer & Contact */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Footer &amp; Contact</h3>
+        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.footerContact')}</h3>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Text shown at the bottom of the guest landing page. WhatsApp number powers the chat icon in the footer.
+          {t('propertyEditor.footerHint')}
         </p>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Footer Description (English)</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.footerDescEn')}</label>
           <textarea
+            dir="ltr"
             value={form.footerText.en}
             onChange={(e) => setForm(prev => ({ ...prev, footerText: { ...prev.footerText, en: e.target.value } }))}
             rows={3}
-            placeholder="e.g. Exceptional luxury chalets curated for the modern traveler."
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.footerDescPlaceholderEn')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-left")}
           />
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Footer Description (Arabic)
+            <Languages size={12} /> {t('propertyEditor.footerDescAr')}
           </label>
           <textarea
             dir="rtl"
             value={form.footerText.ar}
             onChange={(e) => setForm(prev => ({ ...prev, footerText: { ...prev.footerText, ar: e.target.value } }))}
             rows={3}
-            placeholder="أدخل وصف التذييل بالعربية..."
-            className={cn(inputClass, "leading-relaxed resize-none")}
+            placeholder={t('propertyEditor.footerDescPlaceholderAr')}
+            className={cn(baseInputClass, "leading-relaxed resize-none text-right")}
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">WhatsApp Number</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.whatsappNumber')}</label>
           <input
             type="tel"
+            dir={dir}
             value={form.whatsappNumber}
             onChange={(e) => setForm(prev => ({ ...prev, whatsappNumber: e.target.value }))}
-            placeholder="e.g. 96891000001 (country code + number, no + or spaces)"
+            placeholder={t('propertyEditor.whatsappPlaceholder')}
             className={inputClass}
           />
-          <p className="text-[10px] text-primary-navy/40 font-medium">Used for the footer WhatsApp link: https://wa.me/[number]. Leave blank to hide the icon.</p>
+          <p className="text-[10px] text-primary-navy/40 font-medium">{t('propertyEditor.whatsappHint')}</p>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Tourism License Number</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.tourismLicense')}</label>
           <input
             type="text"
+            dir={dir}
             value={form.licenseNumber}
             onChange={(e) => setForm(prev => ({ ...prev, licenseNumber: e.target.value }))}
-            placeholder="e.g. TL-889"
+            placeholder={t('propertyEditor.tourismLicensePlaceholder')}
             className={inputClass}
           />
-          <p className="text-[10px] text-primary-navy/40 font-medium">Displayed in the public footer and on generated PDFs. Leave blank to hide.</p>
+          <p className="text-[10px] text-primary-navy/40 font-medium">{t('propertyEditor.tourismLicenseHint')}</p>
         </div>
       </section>
 
       {/* Description */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-5">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Description</h3>
+        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.description')}</h3>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Section Headline</label>
-          <input type="text" value={form.headline.en} onChange={(e) => setForm(prev => ({ ...prev, headline: { ...prev.headline, en: e.target.value } }))} placeholder="e.g. Curated Excellence" className={inputClass} />
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.sectionHeadline')}</label>
+          <input type="text" dir={dir} value={form.headline.en} onChange={(e) => setForm(prev => ({ ...prev, headline: { ...prev.headline, en: e.target.value } }))} placeholder={t('propertyEditor.sectionHeadlinePlaceholder')} className={inputClass} />
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Section Headline (Arabic)
+            <Languages size={12} /> {t('propertyEditor.sectionHeadlineAr')}
           </label>
-          <input type="text" dir="rtl" value={form.headline.ar} onChange={(e) => setForm(prev => ({ ...prev, headline: { ...prev.headline, ar: e.target.value } }))} placeholder="e.g. تميز مُنسّق" className={inputClass} />
+          <input type="text" dir="rtl" value={form.headline.ar} onChange={(e) => setForm(prev => ({ ...prev, headline: { ...prev.headline, ar: e.target.value } }))} placeholder={t('propertyEditor.sectionHeadlineArPlaceholder')} className={cn(baseInputClass, "text-right")} />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Summary Text</label>
-          <textarea value={form.description.en} onChange={(e) => setForm(prev => ({ ...prev, description: { ...prev.description, en: e.target.value } }))} rows={4} className={cn(inputClass, "leading-relaxed resize-none")} />
+          <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.summaryText')}</label>
+          <textarea dir="ltr" value={form.description.en} onChange={(e) => setForm(prev => ({ ...prev, description: { ...prev.description, en: e.target.value } }))} rows={4} className={cn(baseInputClass, "leading-relaxed resize-none text-left")} />
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1.5">
-            <Languages size={12} /> Summary Text (Arabic)
+            <Languages size={12} /> {t('propertyEditor.summaryTextAr')}
           </label>
-          <textarea dir="rtl" value={form.description.ar} onChange={(e) => setForm(prev => ({ ...prev, description: { ...prev.description, ar: e.target.value } }))} rows={4} placeholder="أدخل الوصف بالعربية..." className={cn(inputClass, "leading-relaxed resize-none")} />
+          <textarea dir="rtl" value={form.description.ar} onChange={(e) => setForm(prev => ({ ...prev, description: { ...prev.description, ar: e.target.value } }))} rows={4} placeholder={t('propertyEditor.summaryArPlaceholder')} className={cn(baseInputClass, "leading-relaxed resize-none text-right")} />
         </div>
       </section>
 
       {/* Property Quick Facts */}
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-4">
-        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Property Quick Facts</h3>
+        <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.quickFacts')}</h3>
         <div className="space-y-2">
           {(form.quickFacts || []).map((fact, i) => (
             <div key={i} className="flex items-center gap-2 bg-pearl-white border border-primary-navy/10 rounded-xl px-4 py-2.5">
@@ -946,11 +964,12 @@ const PropertyEditorComponent: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <select
+            dir={dir}
             value={newFactIcon}
             onChange={(e) => setNewFactIcon(e.target.value)}
-            className="w-36 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+            className={cn("w-36 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
           >
-            <option value="">Icon (Star)</option>
+            <option value="">{t('propertyEditor.iconStar')}</option>
             {[
               { key: 'Users', label: 'Users' },
               { key: 'Ruler', label: 'Ruler' },
@@ -976,8 +995,8 @@ const PropertyEditorComponent: React.FC = () => {
               <option key={ic.key} value={ic.key}>{ic.label}</option>
             ))}
           </select>
-          <input type="text" value={newFactLabel} onChange={(e) => setNewFactLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder="Label (English)" className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
-          <input type="text" dir="rtl" value={newFactLabelAr} onChange={(e) => setNewFactLabelAr(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder="بالعربية (اختياري)" className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
+          <input type="text" dir={dir} value={newFactLabel} onChange={(e) => setNewFactLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelEnglish')} className={cn("flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)} />
+          <input type="text" dir="rtl" value={newFactLabelAr} onChange={(e) => setNewFactLabelAr(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelArabic')} className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
           <button onClick={addQuickFact} disabled={!newFactLabel.trim()} className="px-4 py-2.5 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30">
             <Plus size={16} />
           </button>
@@ -988,10 +1007,10 @@ const PropertyEditorComponent: React.FC = () => {
       <section className="bg-white rounded-[20px] p-6 border border-primary-navy/5 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <LayoutGrid size={16} className="text-secondary-gold" />
-          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">Feature Sections</h3>
+          <h3 className="text-sm font-bold text-primary-navy uppercase tracking-wide">{t('propertyEditor.featureSections')}</h3>
         </div>
         <p className="text-[10px] text-primary-navy/40 font-medium">
-          Group property features into themed sections (e.g. Kitchen, Bedrooms, Outdoor). Each section is shown as a card in the guest view.
+          {t('propertyEditor.featureSectionsHint')}
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1003,32 +1022,33 @@ const PropertyEditorComponent: React.FC = () => {
                 <div className="flex items-start gap-2">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">Title (English)</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">{t('propertyEditor.titleEnglish')}</label>
                       <input
                         type="text"
+                        dir={dir}
                         value={section.titleEn}
                         onChange={(e) => updateSectionTitle(idx, { titleEn: e.target.value })}
-                        placeholder="e.g. Kitchen"
-                        className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                        placeholder={t('propertyEditor.titleEnPlaceholder')}
+                        className={cn("w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold flex items-center gap-1">
-                        <Languages size={10} /> Title (Arabic)
+                        <Languages size={10} /> {t('propertyEditor.titleArabic')}
                       </label>
                       <input
                         type="text"
                         dir="rtl"
                         value={section.titleAr}
                         onChange={(e) => updateSectionTitle(idx, { titleAr: e.target.value })}
-                        placeholder="مثال: المطبخ"
-                        className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                        placeholder={t('propertyEditor.titleArPlaceholder')}
+                        className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-sm font-bold text-primary-navy text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
                       />
                     </div>
                   </div>
                   <button
                     onClick={() => removeSection(idx)}
-                    aria-label="Delete section"
+                    aria-label={t('propertyEditor.deleteSection')}
                     className="mt-5 p-2 text-primary-navy/30 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
                   >
                     <Trash2 size={14} />
@@ -1040,22 +1060,23 @@ const PropertyEditorComponent: React.FC = () => {
                     <div key={j} className="flex items-center gap-2">
                       <input
                         type="text"
+                        dir={dir}
                         value={item.en}
                         onChange={(e) => updateItem(idx, j, { en: e.target.value })}
-                        placeholder="English"
-                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                        placeholder={t('propertyEditor.english')}
+                        className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
                       />
                       <input
                         type="text"
                         dir="rtl"
                         value={item.ar}
                         onChange={(e) => updateItem(idx, j, { ar: e.target.value })}
-                        placeholder="العربية"
-                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                        placeholder={t('propertyEditor.arabic')}
+                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
                       />
                       <button
                         onClick={() => removeItemFromSection(idx, j)}
-                        aria-label="Remove item"
+                        aria-label={t('propertyEditor.removeItem')}
                         className="p-1.5 text-primary-navy/25 hover:text-red-500 transition-colors"
                       >
                         <X size={12} />
@@ -1063,20 +1084,21 @@ const PropertyEditorComponent: React.FC = () => {
                     </div>
                   ))}
                   {section.items.length === 0 && (
-                    <p className="text-[10px] text-primary-navy/30 font-medium italic px-1">No items yet — add one below.</p>
+                    <p className="text-[10px] text-primary-navy/30 font-medium italic px-1">{t('propertyEditor.noItemsYet')}</p>
                   )}
                 </div>
 
                 <div className="border-t border-primary-navy/5 pt-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40 mb-1.5">Add Item</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40 mb-1.5">{t('propertyEditor.addItem')}</p>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
+                      dir={dir}
                       value={draft.en}
                       onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), en: e.target.value } }))}
                       onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
-                      placeholder="English (e.g. Fridge)"
-                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      placeholder={t('propertyEditor.addItemEnPlaceholder')}
+                      className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
                     />
                     <input
                       type="text"
@@ -1084,8 +1106,8 @@ const PropertyEditorComponent: React.FC = () => {
                       value={draft.ar}
                       onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), ar: e.target.value } }))}
                       onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
-                      placeholder="بالعربية (مثال: ثلاجة)"
-                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      placeholder={t('propertyEditor.addItemArPlaceholder')}
+                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
                     />
                     <button
                       onClick={() => addItemToSection(idx)}
@@ -1105,7 +1127,7 @@ const PropertyEditorComponent: React.FC = () => {
           onClick={addSection}
           className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-primary-navy/15 rounded-2xl text-primary-navy/50 hover:border-secondary-gold/50 hover:text-secondary-gold hover:bg-secondary-gold/[0.02] transition-all text-xs font-bold uppercase tracking-widest"
         >
-          <Plus size={14} /> Add New Section
+          <Plus size={14} /> {t('propertyEditor.addNewSection')}
         </button>
       </section>
 
@@ -1114,13 +1136,13 @@ const PropertyEditorComponent: React.FC = () => {
         <AnimatePresence>
           {saved && (
             <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex items-center gap-2 text-emerald-600 text-sm font-bold">
-              <Check size={16} /> Changes saved
+              <Check size={16} /> {t('propertyEditor.changesSaved')}
             </motion.div>
           )}
         </AnimatePresence>
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-primary-navy text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest active:scale-[0.98] transition-all disabled:opacity-60 shadow-lg shadow-primary-navy/20">
           {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('propertyEditor.saving') : t('propertyEditor.saveChanges')}
         </button>
       </div>
     </div>
