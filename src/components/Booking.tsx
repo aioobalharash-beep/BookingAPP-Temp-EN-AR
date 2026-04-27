@@ -687,7 +687,7 @@ export const Booking: React.FC = () => {
   if (loading) return <div className="p-8 animate-pulse"><div className="h-96 bg-primary-navy/5 rounded-xl" /></div>;
 
   return (
-    <div className="p-6 space-y-10 max-w-lg mx-auto">
+    <div className="px-4 py-6 sm:px-6 space-y-10 max-w-lg mx-auto">
       {/* Back Button */}
       <button
         onClick={() => navigate('/')}
@@ -699,7 +699,7 @@ export const Booking: React.FC = () => {
 
       <section className="text-center space-y-2">
         <span className="text-secondary-gold font-bold tracking-widest text-[10px] uppercase">{t('booking.bookYourStay')}</span>
-        <h2 className="font-headline text-4xl font-bold text-primary-navy">{t('booking.selectDates')}</h2>
+        <h2 className="font-headline text-2xl sm:text-4xl font-bold text-primary-navy">{t('booking.selectDates')}</h2>
         <p className="text-primary-navy/60 text-sm max-w-xs mx-auto">
           {t('booking.selectDatesDesc', { name: property?.name || t('common.alMalak') })}
         </p>
@@ -775,7 +775,7 @@ export const Booking: React.FC = () => {
                 }
               }}
               className={cn(
-                "relative p-4 rounded-[18px] border-2 transition-all text-center",
+                "relative p-3 sm:p-4 rounded-[18px] border-2 transition-all text-center min-h-[44px] flex flex-col items-center justify-center",
                 stayType === opt.value
                   ? "border-primary-navy bg-primary-navy/5"
                   : "border-primary-navy/10 bg-white hover:border-primary-navy/20"
@@ -871,7 +871,7 @@ export const Booking: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="bg-white rounded-[24px] p-6 shadow-sm border border-primary-navy/5">
+            <div className="bg-white rounded-[24px] p-4 sm:p-6 shadow-sm border border-primary-navy/5">
               <div className="flex justify-between items-center mb-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
                   {pickerMode === 'check_in' ? t('booking.pickCheckIn') : t('booking.pickCheckOut')}
@@ -1007,7 +1007,7 @@ export const Booking: React.FC = () => {
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-surface-container-low p-6 rounded-[24px] space-y-4"
+          className="bg-surface-container-low p-4 sm:p-6 rounded-[24px] space-y-4"
         >
           <div className="flex justify-between text-sm">
             <div>
@@ -1106,10 +1106,10 @@ export const Booking: React.FC = () => {
             </div>
           )}
 
-          <div className="pt-4 border-t border-primary-navy/5 flex justify-between items-end">
-            <p className="text-xl font-bold font-headline">{t('booking.grandTotal')}</p>
-            <div className="text-end">
-              <p className="text-2xl font-bold text-secondary-gold font-headline">{grandTotal} {t('common.omr')}</p>
+          <div className="pt-4 border-t border-primary-navy/5 flex justify-between items-end gap-2">
+            <p className="text-lg sm:text-xl font-bold font-headline">{t('booking.grandTotal')}</p>
+            <div className="text-end shrink-0">
+              <p className="text-xl sm:text-2xl font-bold text-secondary-gold font-headline">{grandTotal} {t('common.omr')}</p>
             </div>
           </div>
         </motion.section>

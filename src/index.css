@@ -15,35 +15,71 @@
 }
 
 @layer base {
+  /* ─── Mobile-first base ─────────────────────────────────────────────────── */
+
+  /* Prevent any element from causing horizontal scroll */
+  html {
+    overflow-x: hidden;
+    /* Fluid base font: 14px on 320px screens → 16px on 430px+ screens */
+    font-size: clamp(0.875rem, 3.5vw, 1rem);
+    -webkit-text-size-adjust: 100%; /* stop iOS auto-inflate on landscape */
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-pearl-white text-primary-navy font-body antialiased;
+    overflow-x: hidden;
+    max-width: 100%;
+    /* Prevent long words / URLs from blowing out containers */
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* All flex/grid children respect their container — the #1 cause of overflow */
+  *, *::before, *::after {
+    min-width: 0;
+  }
+
+  /* Touch targets: WCAG 2.5.5 / Apple HIG minimum 44 px for form controls */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select {
+    min-height: 2.75rem; /* 44px */
+  }
+
+  /* Images never spill out of their containers */
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
 
-  /* Arabic typography — activated via html.ar class */
+  /* ─── Arabic typography ─────────────────────────────────────────────────── */
+  /* Activated via html.ar class set by LanguageContext */
   html.ar body {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
-    line-height: 1.8;
+    /* Cairo renders better than IBM Plex on Android; IBM Plex is the fallback */
+    font-family: "Cairo", "IBM Plex Sans Arabic", sans-serif;
+    /* 1.6 prevents diacritic/descender clipping on Android Chrome & Samsung Browser */
+    line-height: 1.6;
   }
 
   html.ar h1, html.ar h2, html.ar h3, html.ar h4, html.ar h5, html.ar h6 {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
+    font-family: "Cairo", "IBM Plex Sans Arabic", sans-serif;
     font-weight: 700;
     line-height: 1.6;
   }
 
   /* Override headline/body font utilities when Arabic */
   html.ar .font-headline {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
+    font-family: "Cairo", "IBM Plex Sans Arabic", sans-serif;
   }
   html.ar .font-body {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
+    font-family: "Cairo", "IBM Plex Sans Arabic", sans-serif;
   }
   html.ar .font-lato {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
+    font-family: "Cairo", "IBM Plex Sans Arabic", sans-serif;
   }
 }
 
