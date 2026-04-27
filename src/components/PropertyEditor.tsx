@@ -333,7 +333,7 @@ const PropertyEditorComponent: React.FC = () => {
   if (loading) return <div className="p-8 animate-pulse"><div className="h-96 bg-primary-navy/5 rounded-xl" /></div>;
 
   return (
-    <div dir={dir} className={cn("p-6 md:p-8 space-y-8 max-w-4xl mx-auto", textAlignClass)}>
+    <div dir={dir} className={cn("px-4 py-6 sm:px-6 md:p-8 space-y-8 max-w-4xl mx-auto", textAlignClass)}>
       {/* Header */}
       <div>
         <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-primary-navy/50 hover:text-primary-navy transition-colors text-xs font-bold uppercase tracking-wider mb-3">
@@ -491,8 +491,8 @@ const PropertyEditorComponent: React.FC = () => {
 
         {(form.pricing.day_use_slots || []).map(slot => (
           <div key={slot.id} className="bg-pearl-white rounded-xl p-4 space-y-3 border border-primary-navy/5">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 me-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-primary-navy">{slot.name}</p>
                 {slot.name_ar && <p className="text-xs text-primary-navy/50 font-medium" dir="rtl">{slot.name_ar}</p>}
                 <p className="text-[10px] text-primary-navy/40 font-medium">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</p>
@@ -504,24 +504,26 @@ const PropertyEditorComponent: React.FC = () => {
                   value={slot.name_ar || ''}
                   onChange={(e) => updateSlot(slot.id, { name_ar: e.target.value })}
                   placeholder={t('propertyEditor.slotNameArPlaceholder')}
-                  className="w-40 bg-white border border-primary-navy/10 rounded-lg py-1.5 px-3 text-xs text-right focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                  className="flex-1 sm:w-40 bg-white border border-primary-navy/10 rounded-lg py-1.5 px-3 text-xs text-right focus:ring-1 focus:ring-secondary-gold/50 outline-none"
                 />
-                <button onClick={() => removeSlot(slot.id)} className="text-primary-navy/20 hover:text-red-500 transition-colors"><X size={16} /></button>
+                <button onClick={() => removeSlot(slot.id)} className="text-primary-navy/20 hover:text-red-500 transition-colors shrink-0"><X size={16} /></button>
               </div>
             </div>
-            <div className="grid grid-cols-7 gap-2">
-              {(['sunday_rate', 'monday_rate', 'tuesday_rate', 'wednesday_rate', 'thursday_rate', 'friday_rate', 'saturday_rate'] as (keyof DayUseSlot)[]).map((key, i) => (
-                <div key={key} className="space-y-1">
-                  <label className="text-[8px] font-bold uppercase text-primary-navy/30 text-center block">{[t('propertyEditor.daySun'), t('propertyEditor.dayMon'), t('propertyEditor.dayTue'), t('propertyEditor.dayWed'), t('propertyEditor.dayThu'), t('propertyEditor.dayFri'), t('propertyEditor.daySat')][i]}</label>
-                  <input
-                    type="number"
-                    dir={dir}
-                    value={slot[key] as number}
-                    onChange={(e) => updateSlot(slot.id, { [key]: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-1 text-xs font-medium text-center focus:ring-1 focus:ring-secondary-gold/50 outline-none"
-                  />
-                </div>
-              ))}
+            <div className="overflow-x-auto -mx-1 px-1">
+              <div className="grid grid-cols-7 gap-2 min-w-[320px]">
+                {(['sunday_rate', 'monday_rate', 'tuesday_rate', 'wednesday_rate', 'thursday_rate', 'friday_rate', 'saturday_rate'] as (keyof DayUseSlot)[]).map((key, i) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-[8px] font-bold uppercase text-primary-navy/30 text-center block">{[t('propertyEditor.daySun'), t('propertyEditor.dayMon'), t('propertyEditor.dayTue'), t('propertyEditor.dayWed'), t('propertyEditor.dayThu'), t('propertyEditor.dayFri'), t('propertyEditor.daySat')][i]}</label>
+                    <input
+                      type="number"
+                      dir={dir}
+                      value={slot[key] as number}
+                      onChange={(e) => updateSlot(slot.id, { [key]: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-white border border-primary-navy/10 rounded-lg py-2 px-1 text-xs font-medium text-center focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ))}
@@ -664,7 +666,7 @@ const PropertyEditorComponent: React.FC = () => {
 
         {form.pricing.discount?.enabled && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.discountType')}</label>
                 <div className="flex gap-2">
@@ -701,7 +703,7 @@ const PropertyEditorComponent: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40">{t('propertyEditor.startDate')}</label>
                 <input type="date" dir={dir} value={form.pricing.discount.start_date} onChange={(e) => setDiscount({ start_date: e.target.value })} className={inputClass} />
@@ -962,12 +964,12 @@ const PropertyEditorComponent: React.FC = () => {
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <select
             dir={dir}
             value={newFactIcon}
             onChange={(e) => setNewFactIcon(e.target.value)}
-            className={cn("w-36 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
+            className={cn("w-full sm:w-36 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
           >
             <option value="">{t('propertyEditor.iconStar')}</option>
             {[
@@ -995,9 +997,11 @@ const PropertyEditorComponent: React.FC = () => {
               <option key={ic.key} value={ic.key}>{ic.label}</option>
             ))}
           </select>
-          <input type="text" dir={dir} value={newFactLabel} onChange={(e) => setNewFactLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelEnglish')} className={cn("flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)} />
-          <input type="text" dir="rtl" value={newFactLabelAr} onChange={(e) => setNewFactLabelAr(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelArabic')} className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
-          <button onClick={addQuickFact} disabled={!newFactLabel.trim()} className="px-4 py-2.5 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30">
+          <div className="flex flex-1 gap-2 min-w-0">
+            <input type="text" dir={dir} value={newFactLabel} onChange={(e) => setNewFactLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelEnglish')} className={cn("flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)} />
+            <input type="text" dir="rtl" value={newFactLabelAr} onChange={(e) => setNewFactLabelAr(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addQuickFact()} placeholder={t('propertyEditor.labelArabic')} className="flex-1 bg-pearl-white border border-primary-navy/10 rounded-xl py-2.5 px-4 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none" />
+          </div>
+          <button onClick={addQuickFact} disabled={!newFactLabel.trim()} className="sm:self-auto self-end px-4 py-2.5 bg-primary-navy/5 rounded-xl text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30">
             <Plus size={16} />
           </button>
         </div>
@@ -1057,27 +1061,29 @@ const PropertyEditorComponent: React.FC = () => {
 
                 <div className="space-y-1.5">
                   {section.items.map((item, j) => (
-                    <div key={j} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        dir={dir}
-                        value={item.en}
-                        onChange={(e) => updateItem(idx, j, { en: e.target.value })}
-                        placeholder={t('propertyEditor.english')}
-                        className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
-                      />
-                      <input
-                        type="text"
-                        dir="rtl"
-                        value={item.ar}
-                        onChange={(e) => updateItem(idx, j, { ar: e.target.value })}
-                        placeholder={t('propertyEditor.arabic')}
-                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
-                      />
+                    <div key={j} className="flex items-start gap-2">
+                      <div className="flex-1 flex flex-col sm:flex-row gap-2 min-w-0">
+                        <input
+                          type="text"
+                          dir={dir}
+                          value={item.en}
+                          onChange={(e) => updateItem(idx, j, { en: e.target.value })}
+                          placeholder={t('propertyEditor.english')}
+                          className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
+                        />
+                        <input
+                          type="text"
+                          dir="rtl"
+                          value={item.ar}
+                          onChange={(e) => updateItem(idx, j, { ar: e.target.value })}
+                          placeholder={t('propertyEditor.arabic')}
+                          className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs font-bold text-primary-navy/80 text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                        />
+                      </div>
                       <button
                         onClick={() => removeItemFromSection(idx, j)}
                         aria-label={t('propertyEditor.removeItem')}
-                        className="p-1.5 text-primary-navy/25 hover:text-red-500 transition-colors"
+                        className="mt-1.5 sm:mt-0 p-1.5 text-primary-navy/25 hover:text-red-500 transition-colors shrink-0"
                       >
                         <X size={12} />
                       </button>
@@ -1090,29 +1096,31 @@ const PropertyEditorComponent: React.FC = () => {
 
                 <div className="border-t border-primary-navy/5 pt-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-primary-navy/40 mb-1.5">{t('propertyEditor.addItem')}</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      dir={dir}
-                      value={draft.en}
-                      onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), en: e.target.value } }))}
-                      onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
-                      placeholder={t('propertyEditor.addItemEnPlaceholder')}
-                      className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
-                    />
-                    <input
-                      type="text"
-                      dir="rtl"
-                      value={draft.ar}
-                      onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), ar: e.target.value } }))}
-                      onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
-                      placeholder={t('propertyEditor.addItemArPlaceholder')}
-                      className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
-                    />
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 flex flex-col sm:flex-row gap-2 min-w-0">
+                      <input
+                        type="text"
+                        dir={dir}
+                        value={draft.en}
+                        onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), en: e.target.value } }))}
+                        onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
+                        placeholder={t('propertyEditor.addItemEnPlaceholder')}
+                        className={cn("flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none", textAlignClass)}
+                      />
+                      <input
+                        type="text"
+                        dir="rtl"
+                        value={draft.ar}
+                        onChange={(e) => setNewItemInputs(prev => ({ ...prev, [idx]: { ...(prev[idx] || { en: '', ar: '' }), ar: e.target.value } }))}
+                        onKeyDown={(e) => e.key === 'Enter' && addItemToSection(idx)}
+                        placeholder={t('propertyEditor.addItemArPlaceholder')}
+                        className="flex-1 bg-white border border-primary-navy/10 rounded-lg py-2 px-3 text-xs text-right placeholder:text-primary-navy/25 focus:ring-1 focus:ring-secondary-gold/50 outline-none"
+                      />
+                    </div>
                     <button
                       onClick={() => addItemToSection(idx)}
                       disabled={!canAddItem}
-                      className="px-3 py-2 bg-primary-navy/5 rounded-lg text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30"
+                      className="mt-1.5 sm:mt-0 px-3 py-2 bg-primary-navy/5 rounded-lg text-primary-navy/60 hover:bg-primary-navy/10 transition-colors disabled:opacity-30 shrink-0"
                     >
                       <Plus size={14} />
                     </button>
