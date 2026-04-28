@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, UserPlus, Check, Gift, Upload, IdCard, AlertCircle } from 'lucide-react';
+import { X, UserPlus, Check, Gift, Upload, IdCard, AlertCircle, Moon, Sun } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { firestoreBookings } from '../services/firestore';
@@ -14,7 +14,7 @@ interface AddWalkInGuestProps {
 }
 
 type PaymentMode = 'paid' | 'free';
-type DepositChoice = 'yes' | 'no';
+type StayType = 'night' | 'sameday';
 
 interface WalkInForm {
   name: string;
@@ -36,12 +36,25 @@ const EMPTY_FORM: WalkInForm = {
   property_name: '',
 };
 
+// Returns the checkout time string based on the checkout date day-of-week.
+// Thu (4), Fri (5), Sat (6) → 11:00 AM; all other days → 10:00 AM.
+function getNightCheckOutTime(checkOutDate: string): string {
+  if (!checkOutDate) return '10:00 AM';
+  const [y, m, d] = checkOutDate.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  return [4, 5, 6].includes(dow) ? '11:00 AM' : '10:00 AM';
+}
+
 export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, properties }) => {
   const { t } = useTranslation();
 
   const [form, setForm] = useState<WalkInForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const [stayType, setStayType] = useState<StayType>('night');
+  const [checkInTime, setCheckInTime] = useState('2:00 PM');
+  const [checkOutTime, setCheckOutTime] = useState('10:00 AM');
 
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('paid');
   const [amountPaid, setAmountPaid] = useState('');
@@ -50,18 +63,37 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
   const [receiptFileName, setReceiptFileName] = useState('');
   const [receiptProgress, setReceiptProgress] = useState<number | null>(null);
 
-  // Guest ID upload
   const [idFile, setIdFile] = useState<File | null>(null);
   const [idFileName, setIdFileName] = useState('');
   const [idProgress, setIdProgress] = useState<number | null>(null);
 
-  // Deposit state
-  const [depositPaid, setDepositPaid] = useState<DepositChoice>('yes');
+  const [depositUpfront, setDepositUpfront] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
+
+  // When stayType becomes same-day, sync check_out = check_in
+  useEffect(() => {
+    if (stayType === 'sameday' && form.check_in) {
+      setForm(p => ({ ...p, check_out: p.check_in }));
+    }
+  }, [stayType, form.check_in]);
+
+  // Auto-populate times based on stayType and check_out date
+  useEffect(() => {
+    if (stayType === 'sameday') {
+      setCheckInTime('2:00 PM');
+      setCheckOutTime('11:00 PM');
+    } else {
+      setCheckInTime('2:00 PM');
+      setCheckOutTime(getNightCheckOutTime(form.check_out));
+    }
+  }, [stayType, form.check_out]);
 
   const reset = () => {
     setForm(EMPTY_FORM);
     setErrors({});
+    setStayType('night');
+    setCheckInTime('2:00 PM');
+    setCheckOutTime('10:00 AM');
     setPaymentMode('paid');
     setAmountPaid('');
     setReceiptFile(null);
@@ -70,7 +102,7 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
     setIdFile(null);
     setIdFileName('');
     setIdProgress(null);
-    setDepositPaid('yes');
+    setDepositUpfront(false);
     setDepositAmount('');
   };
 
@@ -99,7 +131,6 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
 
     setSubmitting(true);
     try {
-      // Upload receipt (optional, paid mode only)
       let receiptURL = '';
       if (paymentMode === 'paid' && receiptFile) {
         try {
@@ -118,7 +149,6 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
         }
       }
 
-      // Upload Guest ID (optional) — stored in Firebase Storage-style folder "guest_ids"
       let idImageUrl = '';
       if (idFile) {
         try {
@@ -139,10 +169,7 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
 
       const prop = properties[0];
       const parsedAmount = paymentMode === 'paid' ? parseFloat(amountPaid) : 0;
-      const isDepositPaid = depositPaid === 'yes';
 
-      // Writes to the same `bookings` collection the public Calendar listens on,
-      // so the selected dates are blocked out exactly like a web booking.
       await firestoreBookings.create({
         property_id: prop?.id || 'default',
         property_name: prop?.name || 'Al Malak Chalet',
@@ -151,13 +178,15 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
         guest_email: form.email || undefined,
         check_in: form.check_in,
         check_out: form.check_out,
+        check_in_time: checkInTime,
+        check_out_time: checkOutTime,
         nightly_rate: prop?.nightly_rate || 120,
         security_deposit: parsedDeposit,
         depositAmount: parsedDeposit,
         payment_method: 'walk_in',
         payment_mode: paymentMode,
         amount_paid: parsedAmount,
-        deposit_paid: isDepositPaid,
+        deposit_paid: depositUpfront,
         receiptURL,
         idImageUrl,
         isManual: true,
@@ -246,6 +275,41 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
             />
           </div>
 
+          {/* Stay Type */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+              {t('guests.stayType')}
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-surface-container-low rounded-xl p-1">
+              <button
+                type="button"
+                onClick={() => setStayType('night')}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98]",
+                  stayType === 'night'
+                    ? "bg-primary-navy text-white shadow-sm"
+                    : "text-primary-navy/50 hover:text-primary-navy/70"
+                )}
+              >
+                <Moon size={12} />
+                {t('guests.nightStay')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStayType('sameday')}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98]",
+                  stayType === 'sameday'
+                    ? "bg-secondary-gold text-primary-navy shadow-sm"
+                    : "text-primary-navy/50 hover:text-primary-navy/70"
+                )}
+              >
+                <Sun size={12} />
+                {t('guests.sameDay')}
+              </button>
+            </div>
+          </div>
+
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -271,12 +335,42 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
                 type="date"
                 value={form.check_out}
                 onChange={(e) => setForm(p => ({ ...p, check_out: e.target.value }))}
+                disabled={stayType === 'sameday'}
                 className={cn(
                   "w-full bg-surface-container-low border rounded-xl py-3 px-4 text-sm",
+                  stayType === 'sameday' && "opacity-50 cursor-not-allowed",
                   errors.check_out ? "border-red-300" : "border-transparent"
                 )}
               />
               {errors.check_out && <p className="text-red-500 text-xs">{errors.check_out}</p>}
+            </div>
+          </div>
+
+          {/* Times — auto-populated, editable */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+                {t('guests.checkInTime')}
+              </label>
+              <input
+                type="text"
+                value={checkInTime}
+                onChange={(e) => setCheckInTime(e.target.value)}
+                placeholder="2:00 PM"
+                className="w-full bg-surface-container-low border border-transparent rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
+                {t('guests.checkOutTime')}
+              </label>
+              <input
+                type="text"
+                value={checkOutTime}
+                onChange={(e) => setCheckOutTime(e.target.value)}
+                placeholder="10:00 AM"
+                className="w-full bg-surface-container-low border border-transparent rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20"
+              />
             </div>
           </div>
 
@@ -403,60 +497,56 @@ export const AddWalkInGuest: React.FC<AddWalkInGuestProps> = ({ open, onClose, p
           {/* Deposit Block */}
           <div className="space-y-3 pt-2">
             <label className="block text-start text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-              {t('guests.depositPaidQuestion')}
+              {t('guests.depositAmount')} *
             </label>
-            <div className="grid grid-cols-2 gap-2 bg-surface-container-low rounded-xl p-1">
-              <button
-                type="button"
-                onClick={() => setDepositPaid('yes')}
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="0.00"
                 className={cn(
-                  "flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98]",
-                  depositPaid === 'yes'
-                    ? "bg-primary-navy text-white shadow-sm"
-                    : "text-primary-navy/50 hover:text-primary-navy/70"
+                  "flex-1 bg-surface-container-low border rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20",
+                  errors.deposit ? "border-red-300" : "border-transparent"
                 )}
-              >
-                <Check size={13} />
-                {t('guests.yes')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setDepositPaid('no')}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98]",
-                  depositPaid === 'no'
-                    ? "bg-secondary-gold text-primary-navy shadow-sm"
-                    : "text-primary-navy/50 hover:text-primary-navy/70"
-                )}
-              >
-                {t('guests.no')}
-              </button>
+              />
+              <div className="bg-surface-container-low rounded-xl py-3 px-3 text-sm font-bold text-primary-navy/60">{t('common.omr')}</div>
             </div>
+            {errors.deposit && <p className="text-red-500 text-xs">{errors.deposit}</p>}
 
-            <div className="space-y-1.5">
-              <label className="block text-start text-[10px] font-bold uppercase tracking-widest text-secondary-gold">
-                {t('guests.depositAmount')} *
-              </label>
-              <div className="flex items-center gap-2">
+            {/* Deposit Paid Upfront toggle */}
+            <label className="flex items-start gap-3 cursor-pointer group select-none">
+              <div className="relative mt-0.5 flex-shrink-0">
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputMode="decimal"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  placeholder="0.00"
-                  className={cn(
-                    "flex-1 bg-surface-container-low border rounded-xl py-3 px-4 text-sm placeholder:text-primary-navy/20",
-                    errors.deposit ? "border-red-300" : "border-transparent"
-                  )}
+                  type="checkbox"
+                  checked={depositUpfront}
+                  onChange={(e) => setDepositUpfront(e.target.checked)}
+                  className="sr-only"
                 />
-                <div className="bg-surface-container-low rounded-xl py-3 px-3 text-sm font-bold text-primary-navy/60">{t('common.omr')}</div>
+                <div className={cn(
+                  "w-10 h-6 rounded-full transition-colors",
+                  depositUpfront ? "bg-primary-navy" : "bg-primary-navy/20"
+                )}>
+                  <div className={cn(
+                    "absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                    depositUpfront ? "translate-x-5" : "translate-x-1"
+                  )} />
+                </div>
               </div>
-              {errors.deposit && <p className="text-red-500 text-xs">{errors.deposit}</p>}
-            </div>
+              <div>
+                <p className="text-xs font-bold text-primary-navy leading-tight">
+                  {t('guests.depositPaidUpfront')}
+                </p>
+                <p className="text-[10px] text-primary-navy/50 font-medium mt-0.5">
+                  {t('guests.depositPaidUpfrontHint')}
+                </p>
+              </div>
+            </label>
 
-            {depositPaid === 'no' && parseFloat(depositAmount) > 0 && (
+            {!depositUpfront && parseFloat(depositAmount) > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
                 <AlertCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
                 <p className="text-[11px] text-red-700 font-bold leading-relaxed text-start">

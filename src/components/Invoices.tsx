@@ -35,6 +35,8 @@ interface RealtimeBooking {
   idImageUrl?: string;
   slot_name?: string;
   slot_name_ar?: string;
+  check_in_time?: string;
+  check_out_time?: string;
   created_at: string;
 }
 
@@ -127,7 +129,13 @@ export const Invoices: React.FC = () => {
       const nightWord = isAr ? (b.nights > 1 ? 'ليالٍ' : 'ليلة') : (b.nights > 1 ? 'Nights' : 'Night');
       stayLabel = `${b.nights} ${nightWord} — ${propName}`;
     }
-    const depositLabel = isAr ? 'مبلغ التأمين يدفع عند الدخول' : 'Security Deposit – Payable at Check-in';
+    // deposit_paid = true  → deposit collected upfront; include in Grand Total
+    // deposit_paid = false → deposit payable on entry; Grand Total = stay only
+    const isDepositUpfront = b.deposit_paid !== false;
+    const depositLabel = isDepositUpfront
+      ? (isAr ? 'مبلغ التأمين' : 'Security Deposit')
+      : (isAr ? 'مبلغ التأمين يدفع عند الدخول' : 'Security Deposit – Payable on Entry');
+    const invoiceTotal = isDepositUpfront ? stayTotal + deposit : stayTotal;
     const items: Invoice['items'] = [
       { id: 1, invoice_id: b.id, description: stayLabel, amount: stayTotal },
     ];
@@ -141,7 +149,7 @@ export const Invoices: React.FC = () => {
       room_type: propName,
       subtotal: stayTotal,
       vat_amount: 0,
-      total_amount: stayTotal,
+      total_amount: invoiceTotal,
       status: b.status === 'confirmed' ? 'paid' : 'pending',
       vat_compliant: false,
       issued_date: b.created_at,
@@ -582,6 +590,8 @@ export const Invoices: React.FC = () => {
           depositUnpaid={selectedBooking?.deposit_paid === false}
           checkIn={selectedBooking?.check_in}
           checkOut={selectedBooking?.check_out}
+          checkInTime={selectedBooking?.check_in_time}
+          checkOutTime={selectedBooking?.check_out_time}
           termsText={i18n.language === 'ar' ? termsAr : termsEn}
         />
       )}

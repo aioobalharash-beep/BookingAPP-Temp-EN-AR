@@ -11,6 +11,8 @@ interface PrintableInvoiceProps {
   depositUnpaid?: boolean;
   checkIn?: string;
   checkOut?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
   termsText?: string;
 }
 
@@ -58,6 +60,9 @@ const DEFAULT_TERMS_AR = `1. الحجز والدفع
 const localizeDesc = (desc: string, isAr: boolean, property: string): string => {
   if (!isAr) return desc;
   if (/[؀-ۿ]/.test(desc)) return desc;
+  // Deposit paid upfront — no "payable on entry" suffix
+  if (/^security\s*deposit$/i.test(desc)) return 'مبلغ التأمين';
+  // Deposit not paid upfront — payable on entry
   if (/security\s*deposit|refundable\s*security\s*deposit/i.test(desc)) return 'مبلغ التأمين يدفع عند الدخول';
   if (/full\s*day|day\s*use/i.test(desc)) return `يوم كامل بدون مبيت — ${property}`;
   if (/partial/i.test(desc)) return `حجز جزئي — ${property}`;
@@ -83,6 +88,8 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
   depositUnpaid,
   checkIn,
   checkOut,
+  checkInTime: checkInTimeProp,
+  checkOutTime: checkOutTimeProp,
   termsText,
 }) => {
   const isAr = lang === 'ar';
@@ -104,8 +111,9 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
   const checkInStr = fmtDate(checkIn);
   const checkOutStr = fmtDate(checkOut);
 
-  const checkInTime = isAr ? CHECK_IN_TIME_AR : CHECK_IN_TIME_EN;
-  const checkOutTime = isAr ? CHECK_OUT_TIME_AR : CHECK_OUT_TIME_EN;
+  // Use booking-specific times when available; fall back to property defaults
+  const checkInTime = checkInTimeProp || (isAr ? CHECK_IN_TIME_AR : CHECK_IN_TIME_EN);
+  const checkOutTime = checkOutTimeProp || (isAr ? CHECK_OUT_TIME_AR : CHECK_OUT_TIME_EN);
 
   const t = {
     invoice: isAr ? 'فاتورة' : 'INVOICE',
