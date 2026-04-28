@@ -300,16 +300,6 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
           </span>
         </section>
 
-        {/* Deposit notice */}
-        {depositUnpaid && balanceDue && balanceDue > 0 && (
-          <section className="pi-notice">
-            <div className="pi-notice-title">{t.depositDue}</div>
-            <div className="pi-notice-body">
-              {t.depositDueMsg} ({fmt(balanceDue)} {t.currency})
-            </div>
-          </section>
-        )}
-
         <footer className="pi-footer">
           <div className="pi-footer-rule" />
           <div className="pi-footer-text">{t.footer}</div>

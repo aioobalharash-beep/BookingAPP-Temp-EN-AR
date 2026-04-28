@@ -682,23 +682,6 @@ export const Invoices: React.FC = () => {
                   </tbody>
                 </table>
 
-                {/* Red notice: deposit still needs to be collected at check-in.
-                    Only shown when the admin explicitly recorded the deposit as
-                    unpaid on a walk-in booking. */}
-                {selectedBooking?.deposit_paid === false && Number(selectedBooking?.depositAmount || selectedBooking?.security_deposit || 0) > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-red-700">Deposit Due on Arrival</p>
-                      <p className="text-xs text-red-600/80 mt-0.5">
-                        Remaining balance of OMR{' '}
-                        {(Number(selectedBooking?.balance_due) || Number(selectedBooking?.depositAmount) || Number(selectedBooking?.security_deposit) || 0).toFixed(2)}{' '}
-                        to be collected at check-in.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
                 {/* Attachment strip — Guest ID thumbnail side-by-side with the
                     payment receipt so the admin can verify both at a glance. */}
                 {(selectedBooking?.idImageUrl || selectedBooking?.receiptURL) && (
