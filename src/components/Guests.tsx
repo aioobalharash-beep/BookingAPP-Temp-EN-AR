@@ -239,32 +239,32 @@ export const Guests: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 max-w-4xl mx-auto">
       <section>
-        <h2 className="font-headline text-2xl font-bold text-primary-navy mb-1">{t('guests.guestManagement')}</h2>
-        <p className="text-primary-navy/50 text-sm font-medium">{t('guests.curatingHospitality')}</p>
+        <h2 className="font-headline text-xl sm:text-2xl font-bold text-primary-navy mb-1">{t('guests.guestManagement')}</h2>
+        <p className="text-primary-navy/50 text-xs sm:text-sm font-medium">{t('guests.curatingHospitality')}</p>
       </section>
 
       {/* Stat Widgets */}
-      <section className="grid grid-cols-2 gap-4">
-        <div className="bg-primary-navy p-5 rounded-xl shadow-lg">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-primary-navy p-4 sm:p-5 rounded-xl shadow-lg">
           <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2">{t('guests.pendingApproval')}</p>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-headline font-bold text-white">{String(stats.pending).padStart(2, '0')}</span>
-            {stats.pending > 0 && <span className="bg-secondary-gold/20 text-secondary-gold px-2 py-0.5 rounded text-[9px] font-bold uppercase mb-1">New</span>}
+          <div className="flex items-end gap-2 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-headline font-bold text-white">{String(stats.pending).padStart(2, '0')}</span>
+            {stats.pending > 0 && <span className="bg-secondary-gold/20 text-secondary-gold px-2 py-0.5 rounded text-[9px] font-bold uppercase mb-1">{t('guests.newBadge')}</span>}
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-primary-navy/5 shadow-sm">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-primary-navy/5 shadow-sm">
           <p className="text-[10px] uppercase tracking-widest text-primary-navy/50 font-bold mb-2">{t('guests.upcomingArrivals')}</p>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-headline font-bold text-primary-navy">{String(stats.upcoming).padStart(2, '0')}</span>
-            {stats.checkedIn > 0 && <span className="text-xs text-emerald-600 font-bold mb-1">{stats.checkedIn} checked in</span>}
+          <div className="flex items-end gap-2 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-headline font-bold text-primary-navy">{String(stats.upcoming).padStart(2, '0')}</span>
+            {stats.checkedIn > 0 && <span className="text-[11px] sm:text-xs text-emerald-600 font-bold mb-1">{t('guests.checkedInCount', { value: stats.checkedIn })}</span>}
           </div>
         </div>
       </section>
 
       {/* Search + Filters */}
-      <section className="space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <div className="relative group">
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 text-primary-navy/40" size={18} />
           <input
@@ -272,17 +272,17 @@ export const Guests: React.FC = () => {
             placeholder={t('guests.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border-none rounded-xl py-4 ps-12 pe-4 shadow-sm focus:ring-1 focus:ring-secondary-gold/50 placeholder:text-primary-navy/30 text-sm transition-all"
+            className="w-full bg-white border-none rounded-xl py-3.5 sm:py-4 ps-12 pe-4 shadow-sm focus:ring-1 focus:ring-secondary-gold/50 placeholder:text-primary-navy/30 text-sm transition-all"
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
           {filters.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
               className={cn(
-                "whitespace-nowrap px-6 py-2.5 rounded-full text-xs font-bold transition-all active:scale-95",
+                "whitespace-nowrap px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold transition-all active:scale-95",
                 activeFilter === filter.id ? "bg-primary-navy text-white" : "bg-white text-primary-navy/60 hover:bg-primary-navy/5 shadow-sm"
               )}
             >
@@ -333,31 +333,31 @@ export const Guests: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.06 }}
                 className={cn(
-                  "bg-white p-5 rounded-xl shadow-sm border space-y-4 transition-all duration-500",
+                  "bg-white p-4 sm:p-5 rounded-xl shadow-sm border space-y-3 sm:space-y-4 transition-all duration-500",
                   isHighlighted ? "border-secondary-gold ring-2 ring-secondary-gold/40 shadow-lg shadow-secondary-gold/10 bg-secondary-gold/[0.02]" :
                   guest.isPinned ? "border-secondary-gold/40 bg-secondary-gold/[0.03]" :
                   "border-primary-navy/5"
                 )}
               >
                 {/* Header */}
-                <div className="flex justify-between items-start">
-                  <div>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-headline font-bold text-primary-navy">{guest.guest_name}</h3>
+                      <h3 className="font-headline font-bold text-primary-navy text-sm sm:text-base break-words">{guest.guest_name}</h3>
                       {guest.isManual && (
                         <span
-                          title="Walk-in / manual entry"
+                          title={t('guests.manualBadgeTooltip')}
                           className="inline-flex items-center gap-1 bg-secondary-gold/15 text-secondary-gold px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest"
                         >
                           <Home size={9} />
-                          Manual
+                          {t('guests.manualBadge')}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-primary-navy/50 font-medium">{guest.guest_phone}</p>
+                    <p className="text-[11px] sm:text-xs text-primary-navy/50 font-medium" dir="ltr">{guest.guest_phone}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className={cn("px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-bold", cfg.badgeClass)}>
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <div className={cn("px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] uppercase tracking-tighter font-bold whitespace-nowrap", cfg.badgeClass)}>
                       {t(cfg.labelKey)}
                     </div>
                     {/* Pin Toggle */}
@@ -377,15 +377,17 @@ export const Guests: React.FC = () => {
                 </div>
 
                 {/* Dates + Property */}
-                <div className="flex items-center gap-4 text-xs font-bold flex-wrap">
+                <div className="flex items-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs font-bold flex-wrap">
                   <div className="flex items-center gap-1.5 text-primary-navy">
-                    <CalendarIcon size={14} className="text-secondary-gold" />
-                    {new Date(guest.check_in).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })} - {new Date(guest.check_out).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                    <CalendarIcon size={14} className="text-secondary-gold flex-shrink-0" />
+                    <span dir="ltr">
+                      {new Date(guest.check_in).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })} – {new Date(guest.check_out).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                    </span>
                   </div>
                   <span className="text-primary-navy/30">&bull;</span>
-                  <span className="text-primary-navy/60">{guest.property_name}</span>
+                  <span className="text-primary-navy/60 truncate">{guest.property_name}</span>
                   <span className="text-primary-navy/30">&bull;</span>
-                  <span className="text-primary-navy/60">{guest.nights} {guest.nights > 1 ? t('common.nights') : t('common.night')}</span>
+                  <span className="text-primary-navy/60 whitespace-nowrap">{guest.nights} {guest.nights > 1 ? t('common.nights') : t('common.night')}</span>
                 </div>
 
                 {/* Total Paid */}
@@ -400,7 +402,7 @@ export const Guests: React.FC = () => {
                   <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
                     <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-700">Deposit Due on Arrival</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-700">{t('guests.depositDueOnArrival')}</span>
                       <span className="text-xs font-bold text-red-700 font-headline">{(guest.balance_due || guest.security_deposit).toFixed(2)} {t('common.omr')}</span>
                     </div>
                   </div>
@@ -465,7 +467,7 @@ export const Guests: React.FC = () => {
                           className="px-4 py-2.5 rounded-lg border border-secondary-gold/40 bg-secondary-gold/5 text-secondary-gold hover:bg-secondary-gold/10 text-[10px] uppercase font-bold tracking-widest active:scale-[0.98] transition-all flex items-center gap-1.5"
                         >
                           <Paperclip size={13} />
-                          View ID
+                          {t('guests.viewId')}
                         </button>
                       )}
                     </>

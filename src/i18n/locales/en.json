@@ -157,7 +157,12 @@
     "unpinVip": "Unpin VIP",
     "transferReceipt": "Transfer Receipt",
     "openFullSize": "Open Full Size",
-    "arrives": "Arrives"
+    "arrives": "Arrives",
+    "manualBadge": "Manual",
+    "manualBadgeTooltip": "Walk-in / manual entry",
+    "viewId": "View ID",
+    "newBadge": "New",
+    "checkedInCount": "{{value}} checked in"
   },
   "booking": {
     "bookYourStay": "Book Your Stay",
