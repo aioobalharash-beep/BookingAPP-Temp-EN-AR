@@ -157,7 +157,12 @@
     "unpinVip": "إلغاء التثبيت",
     "transferReceipt": "إيصال التحويل",
     "openFullSize": "فتح بالحجم الكامل",
-    "arrives": "يصل"
+    "arrives": "يصل",
+    "manualBadge": "يدوي",
+    "manualBadgeTooltip": "إدخال يدوي / حضوري",
+    "viewId": "عرض الهوية",
+    "newBadge": "جديد",
+    "checkedInCount": "{{value}} مسجل دخول"
   },
   "booking": {
     "bookYourStay": "احجز إقامتك",
